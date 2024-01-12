@@ -1,0 +1,11 @@
+micronaut:
+  application:
+    name: unity-iam
+datasources:
+  default:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    db-type: mysql
+flyway:
+  datasources:
+    default:
+      enabled: true
