@@ -13,17 +13,25 @@ repositories {
 }
 
 dependencies {
+  annotationProcessor("io.micronaut.data:micronaut-data-processor")
   annotationProcessor("io.micronaut:micronaut-http-validation")
+  annotationProcessor("io.micronaut.security:micronaut-security-annotations")
   annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+  implementation("io.micronaut.security:micronaut-security-jwt")
+  implementation("io.micronaut.data:micronaut-data-jdbc")
+  implementation("io.micronaut.sql:micronaut-jdbc-hikari")
   implementation("io.micronaut.flyway:micronaut-flyway")
   implementation("io.micronaut.serde:micronaut-serde-jackson")
   implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+  implementation("io.micronaut.reactor:micronaut-reactor")
   compileOnly("io.micronaut:micronaut-http-client")
   runtimeOnly("ch.qos.logback:logback-classic")
   runtimeOnly("mysql:mysql-connector-java")
   runtimeOnly("org.flywaydb:flyway-mysql")
   runtimeOnly("org.yaml:snakeyaml")
   testImplementation("io.micronaut:micronaut-http-client")
+  aotPlugins platform("io.micronaut.platform:micronaut-platform:4.2.3")
+  aotPlugins("io.micronaut.security:micronaut-security-aot")
 }
 
 application {
@@ -55,8 +63,6 @@ micronaut {
     optimizeClassLoading = true
     deduceEnvironment = true
     optimizeNetty = true
+    configurationProperties.put("micronaut.security.jwks.enabled","false")
   }
 }
-
-
-

@@ -45,10 +45,10 @@ CREATE TABLE role_permission
 
 CREATE TABLE user
 (
-    id       int AUTO_INCREMENT PRIMARY KEY,
-    email    varchar(255) NOT NULL,
-    password varchar(255),
-    status   varchar(255),
+    id        int AUTO_INCREMENT PRIMARY KEY,
+    email     varchar(255) NOT NULL,
+    password  varchar(255),
+    status    varchar(255),
     UNIQUE KEY unique_email (email)
 );
 
