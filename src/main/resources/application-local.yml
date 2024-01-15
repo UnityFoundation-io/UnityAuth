@@ -11,7 +11,10 @@ micronaut:
               secret: '"${UNITY_SIGNATURE_SECRET:123456789012345123456789012345123456789012345123456789012345123456789012345}"'
 datasources:
   default:
+    url: jdbc:mysql://localhost:13306/test?allowPublicKeyRetrieval=true&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: test
     db-type: mysql
 flyway:
   datasources:
