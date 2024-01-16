@@ -11,6 +11,7 @@
   </appender>
 
 <!--      <logger name="io.micronaut.data.query" level="trace"/>-->
+      <logger name="io.micronaut.http.client" level="trace"/>
 
 
   <root level="info">
