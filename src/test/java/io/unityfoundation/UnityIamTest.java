@@ -23,39 +23,94 @@ class UnityIamTest {
   HttpClient client;
 
   @Test
-  void testHasPermission() {
-    UsernamePasswordCredentials creds = new UsernamePasswordCredentials("wilsonj@unityfoundation.io", "test");
+  void testHasSystemPermission() {
+    String accessToken = login("wilsonj@unityfoundation.io");
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(1L, null, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
+        .bearerAuth(accessToken);
+    HttpResponse<Boolean> response = client.toBlocking()
+        .exchange(hasPermissionRequest, Boolean.class);
+    assertEquals(HttpStatus.OK, response.getStatus());
+    assertEquals(Boolean.TRUE, response.getBody().get());
+  }
+
+  @Test
+  void testHasNoSystemPermission() {
+    String accessToken = login("test@unityfoundation.io");
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(1L, null, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
+        .bearerAuth(accessToken);
+    HttpResponse<Boolean> response = client.toBlocking()
+        .exchange(hasPermissionRequest, Boolean.class);
+    assertEquals(HttpStatus.OK, response.getStatus());
+    assertEquals(Boolean.FALSE, response.getBody().get());
+  }
+
+  @Test
+  void testHasTenantPermission() {
+    String accessToken = login("wilsonj@unityfoundation.io");
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(2L, null, List.of("LIBRE311_REQUEST_EDIT-TENANT")))
+        .bearerAuth(accessToken);
+    HttpResponse<Boolean> response = client.toBlocking()
+        .exchange(hasPermissionRequest, Boolean.class);
+    assertEquals(HttpStatus.OK, response.getStatus());
+    assertEquals(Boolean.TRUE, response.getBody().get());
+  }
+
+  @Test
+  void testHasNoTenantPermission() {
+    String accessToken = login("wilsonj@unityfoundation.io");
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(2L, 1L, List.of("LIBRE311_REQUEST_VIEW-TENANT")))
+        .bearerAuth(accessToken);
+    HttpResponse<Boolean> response = client.toBlocking()
+        .exchange(hasPermissionRequest, Boolean.class);
+    assertEquals(HttpStatus.OK, response.getStatus());
+    assertEquals(Boolean.FALSE, response.getBody().get());
+  }
+
+  @Test
+  void testHasSubtenantPermission() {
+    String accessToken = login("wilsonj@unityfoundation.io");
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission?subtenant=true", new HasPermissionRequest(2L, 1L, List.of("LIBRE311_REQUEST_EDIT-SUBTENANT")))
+        .bearerAuth(accessToken);
+    HttpResponse<Boolean> response = client.toBlocking()
+        .exchange(hasPermissionRequest, Boolean.class);
+    assertEquals(HttpStatus.OK, response.getStatus());
+    assertEquals(Boolean.TRUE, response.getBody().get());
+  }
+
+  @Test
+  void testHasNoSubtenantPermission() {
+    String accessToken = login("wilsonj@unityfoundation.io");
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission?subtenant=true", new HasPermissionRequest(2L, 2L, List.of("LIBRE311_REQUEST_EDIT-SUBTENANT")))
+        .bearerAuth(accessToken);
+    HttpResponse<Boolean> response = client.toBlocking()
+        .exchange(hasPermissionRequest, Boolean.class);
+    assertEquals(HttpStatus.OK, response.getStatus());
+    assertEquals(Boolean.FALSE, response.getBody().get());
+  }
+
+  @Test
+  void testHasNoSubtenantFlag() {
+    String accessToken = login("wilsonj@unityfoundation.io");
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(2L, 1L, List.of("LIBRE311_REQUEST_EDIT-SUBTENANT")))
+        .bearerAuth(accessToken);
+    HttpResponse<Boolean> response = client.toBlocking()
+        .exchange(hasPermissionRequest, Boolean.class);
+    assertEquals(HttpStatus.OK, response.getStatus());
+    assertEquals(Boolean.FALSE, response.getBody().get());
+  }
+
+  private String login(String username) {
+    UsernamePasswordCredentials creds = new UsernamePasswordCredentials(username, "test");
     HttpRequest<?> request = HttpRequest.POST("/login", creds);
     HttpResponse<BearerAccessRefreshToken> rsp = client.toBlocking()
         .exchange(request, BearerAccessRefreshToken.class);
     assertEquals(HttpStatus.OK, rsp.getStatus());
     BearerAccessRefreshToken bearer = rsp.body();
     String accessToken = bearer.getAccessToken();
-    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission/1/1", new HasPermissionRequest(1L, 1L, List.of("LIBRE311_REQUEST_EDIT-TENANT")))
-        .bearerAuth(accessToken);
-    HttpResponse<Boolean> response = client.toBlocking()
-        .exchange(hasPermissionRequest, Boolean.class);
-    assertEquals(HttpStatus.OK, response.getStatus());
-    assertEquals(Boolean.TRUE, response.getBody().get());
-
-
-/*
-    BearerAccessRefreshToken bearerAccessRefreshToken = rsp.body();
-    assertEquals("sherlock", bearerAccessRefreshToken.getUsername());
-    assertNotNull(bearerAccessRefreshToken.getAccessToken());
-    assertTrue(JWTParser.parse(bearerAccessRefreshToken.getAccessToken()) instanceof SignedJWT);
-
-    String accessToken = bearerAccessRefreshToken.getAccessToken();
-    HttpRequest<?> requestWithAuthorization = HttpRequest.GET("/")
-        .accept(TEXT_PLAIN)
-        .bearerAuth(accessToken);
-    HttpResponse<String> response = client.toBlocking()
-        .exchange(requestWithAuthorization, String.class);
-
-    assertEquals(OK, rsp.getStatus());
-    assertEquals("sherlock", response.body());
-*/
+    return accessToken;
   }
+
+
 
 }
 
