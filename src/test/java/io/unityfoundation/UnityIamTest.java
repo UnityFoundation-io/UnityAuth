@@ -24,7 +24,7 @@ class UnityIamTest {
 
   @Test
   void testHasSystemPermission() {
-    String accessToken = login("wilsonj@unityfoundation.io");
+    String accessToken = login("person1@test.io");
     HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(1L, null, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
         .bearerAuth(accessToken);
     HttpResponse<Boolean> response = client.toBlocking()
@@ -35,7 +35,7 @@ class UnityIamTest {
 
   @Test
   void testHasNoSystemPermission() {
-    String accessToken = login("test@unityfoundation.io");
+    String accessToken = login("test@test.io");
     HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(1L, null, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
         .bearerAuth(accessToken);
     HttpResponse<Boolean> response = client.toBlocking()
@@ -46,7 +46,7 @@ class UnityIamTest {
 
   @Test
   void testHasTenantPermission() {
-    String accessToken = login("wilsonj@unityfoundation.io");
+    String accessToken = login("person1@test.io");
     HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(2L, null, List.of("LIBRE311_REQUEST_EDIT-TENANT")))
         .bearerAuth(accessToken);
     HttpResponse<Boolean> response = client.toBlocking()
@@ -57,7 +57,7 @@ class UnityIamTest {
 
   @Test
   void testHasNoTenantPermission() {
-    String accessToken = login("wilsonj@unityfoundation.io");
+    String accessToken = login("person1@test.io");
     HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(2L, 1L, List.of("LIBRE311_REQUEST_VIEW-TENANT")))
         .bearerAuth(accessToken);
     HttpResponse<Boolean> response = client.toBlocking()
@@ -68,7 +68,7 @@ class UnityIamTest {
 
   @Test
   void testHasSubtenantPermission() {
-    String accessToken = login("wilsonj@unityfoundation.io");
+    String accessToken = login("person1@test.io");
     HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission?subtenant=true", new HasPermissionRequest(2L, 1L, List.of("LIBRE311_REQUEST_EDIT-SUBTENANT")))
         .bearerAuth(accessToken);
     HttpResponse<Boolean> response = client.toBlocking()
@@ -79,7 +79,7 @@ class UnityIamTest {
 
   @Test
   void testHasNoSubtenantPermission() {
-    String accessToken = login("wilsonj@unityfoundation.io");
+    String accessToken = login("person1@test.io");
     HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission?subtenant=true", new HasPermissionRequest(2L, 2L, List.of("LIBRE311_REQUEST_EDIT-SUBTENANT")))
         .bearerAuth(accessToken);
     HttpResponse<Boolean> response = client.toBlocking()
@@ -90,7 +90,7 @@ class UnityIamTest {
 
   @Test
   void testHasNoSubtenantFlag() {
-    String accessToken = login("wilsonj@unityfoundation.io");
+    String accessToken = login("person1@test.io");
     HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(2L, 1L, List.of("LIBRE311_REQUEST_EDIT-SUBTENANT")))
         .bearerAuth(accessToken);
     HttpResponse<Boolean> response = client.toBlocking()

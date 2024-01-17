@@ -17,8 +17,8 @@ public class MockAuthenticationProvider implements AuthenticationProvider<HttpRe
   public Publisher<AuthenticationResponse> authenticate(@Nullable HttpRequest<?> httpRequest,
       AuthenticationRequest<?, ?> authenticationRequest) {
     return Flux.create(emitter -> {
-      if ((authenticationRequest.getIdentity().equals("wilsonj@unityfoundation.io")
-           || authenticationRequest.getIdentity().equals("test@unityfoundation.io")) &&
+      if ((authenticationRequest.getIdentity().equals("person1@test.io")
+           || authenticationRequest.getIdentity().equals("test@test.io")) &&
           authenticationRequest.getSecret().equals("test")) {
         emitter.next(AuthenticationResponse.success((String) authenticationRequest.getIdentity()));
         emitter.complete();
