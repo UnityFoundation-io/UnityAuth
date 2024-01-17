@@ -60,3 +60,6 @@ CREATE TABLE user_role
     PRIMARY KEY (tenant_id, user_id, role_id)
 );
 
+INSERT INTO tenant (name, status) VALUES('SYSTEM', 'ACTIVE');
+
+

@@ -1,3 +1,11 @@
+TRUNCATE TABLE user;
+TRUNCATE TABLE tenant;
+TRUNCATE TABLE service;
+TRUNCATE TABLE tenant_service;
+TRUNCATE TABLE permission;
+TRUNCATE TABLE role;
+TRUNCATE TABLE role_permission;
+TRUNCATE TABLE user_role;
 INSERT INTO user (id, email, password, status) VALUES(1, 'wilsonj@unityfoundation.io', '1234', 'ENABLED');
 INSERT INTO user (id, email, password, status) VALUES(2, 'test@unityfoundation.io', '1234', 'ENABLED');
 INSERT INTO tenant (id, name, status) VALUES(1, 'SYSTEM', 'ACTIVE');
