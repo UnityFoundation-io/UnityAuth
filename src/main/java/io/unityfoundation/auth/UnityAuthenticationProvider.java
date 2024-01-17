@@ -20,7 +20,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 @Singleton
-//@Requires(notEnv="test")
 public class UnityAuthenticationProvider implements AuthenticationProvider<HttpRequest<?>> {
 
   private final UserRepo userRepo;
