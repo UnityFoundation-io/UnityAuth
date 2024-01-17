@@ -4,7 +4,6 @@ import static io.micronaut.security.authentication.AuthenticationFailureReason.C
 import static io.micronaut.security.authentication.AuthenticationFailureReason.USER_DISABLED;
 import static io.micronaut.security.authentication.AuthenticationFailureReason.USER_NOT_FOUND;
 
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.security.authentication.AuthenticationException;
@@ -21,7 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 @Singleton
-@Requires(notEnv="test")
+//@Requires(notEnv="test")
 public class UnityAuthenticationProvider implements AuthenticationProvider<HttpRequest<?>> {
 
   private final UserRepo userRepo;
