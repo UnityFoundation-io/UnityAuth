@@ -1,6 +1,14 @@
 micronaut:
   application:
     name: unity-iam
+  security:
+    authentication: bearer
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: '"${UNITY_SIGNATURE_SECRET:123456789012345123456789012345123456789012345123456789012345123456789012345}"'
 datasources:
   default:
     driver-class-name: com.mysql.cj.jdbc.Driver

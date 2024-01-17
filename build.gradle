@@ -24,6 +24,7 @@ dependencies {
   implementation("io.micronaut.serde:micronaut-serde-jackson")
   implementation("io.micronaut.sql:micronaut-jdbc-hikari")
   implementation("io.micronaut.reactor:micronaut-reactor")
+  implementation("at.favre.lib:bcrypt:0.10.2")
   compileOnly("io.micronaut:micronaut-http-client")
   runtimeOnly("ch.qos.logback:logback-classic")
   runtimeOnly("mysql:mysql-connector-java")

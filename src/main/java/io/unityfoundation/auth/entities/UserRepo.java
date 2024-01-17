@@ -17,6 +17,16 @@ public interface UserRepo extends CrudRepository<User, Long> {
   Optional<User> findByEmail(String email);
 
   @Query("""
+      SELECT id,
+       password,
+       email,
+       status
+FROM user
+WHERE email = :email
+""")
+  Optional<User> findUserForAuthentication(String email);
+
+  @Query("""
       select p.name
 from user_role ur
          inner join role_permission rp on rp.role_id = ur.role_id

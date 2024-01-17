@@ -1,5 +1,6 @@
 package io.unityfoundation;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.security.authentication.AuthenticationProvider;
@@ -11,6 +12,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 @Singleton
+@Requires(env="test")
 public class MockAuthenticationProvider implements AuthenticationProvider<HttpRequest<?>> {
 
   @Override

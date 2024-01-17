@@ -21,6 +21,8 @@ public class User {
 
   private UserStatus status;
 
+  private String password;
+
   @Relation(Relation.Kind.MANY_TO_MANY)
   @JoinTable(
       name = "user_role",
@@ -34,6 +36,14 @@ public class User {
 
   public void setTenants(Set<Tenant> tenants) {
     this.tenants = tenants;
+  }
+
+  public String getPassword() {
+    return password;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
   }
 
   public enum UserStatus {
