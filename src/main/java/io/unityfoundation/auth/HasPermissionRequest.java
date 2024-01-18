@@ -8,6 +8,7 @@ import java.util.List;
 public record HasPermissionRequest(
     @NotNull Long tenantId,
     @NotNull Long serviceId,
+    @NotNull boolean subtenant,
     List<String> permissions
 
 ) {}

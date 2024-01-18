@@ -1,7 +1,6 @@
 package io.unityfoundation.auth;
 
 import static io.micronaut.security.authentication.AuthenticationFailureReason.CREDENTIALS_DO_NOT_MATCH;
-import static io.micronaut.security.authentication.AuthenticationFailureReason.USER_DISABLED;
 import static io.micronaut.security.authentication.AuthenticationFailureReason.USER_NOT_FOUND;
 
 import io.micronaut.core.annotation.Nullable;
@@ -12,7 +11,6 @@ import io.micronaut.security.authentication.AuthenticationProvider;
 import io.micronaut.security.authentication.AuthenticationRequest;
 import io.micronaut.security.authentication.AuthenticationResponse;
 import io.unityfoundation.auth.entities.User;
-import io.unityfoundation.auth.entities.User.UserStatus;
 import io.unityfoundation.auth.entities.UserRepo;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
@@ -59,8 +57,6 @@ public class UnityAuthenticationProvider implements AuthenticationProvider<HttpR
     AuthenticationFailed authenticationFailed = null;
     if (user == null) {
       authenticationFailed = new AuthenticationFailed(USER_NOT_FOUND);
-    } else if (!UserStatus.ENABLED.equals(user.getStatus())) {
-      authenticationFailed = new AuthenticationFailed(USER_DISABLED);
     } else if (!passwordEncoder.matches(authenticationRequest.getSecret().toString(),
         user.getPassword())) {
       authenticationFailed = new AuthenticationFailed(CREDENTIALS_DO_NOT_MATCH);

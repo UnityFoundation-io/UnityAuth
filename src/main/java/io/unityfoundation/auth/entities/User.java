@@ -4,11 +4,7 @@ package io.unityfoundation.auth.entities;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.annotation.sql.JoinColumn;
-import io.micronaut.data.annotation.sql.JoinTable;
 import jakarta.validation.constraints.NotNull;
-import java.util.Set;
 
 @MappedEntity
 public class User {
@@ -22,21 +18,6 @@ public class User {
   private UserStatus status;
 
   private String password;
-
-  @Relation(Relation.Kind.MANY_TO_MANY)
-  @JoinTable(
-      name = "user_role",
-      joinColumns = @JoinColumn(name = "user_id"),
-      inverseJoinColumns = @JoinColumn(name = "tenant_id"))
-  private Set<Tenant> tenants;
-
-  public Set<Tenant> getTenants() {
-    return tenants;
-  }
-
-  public void setTenants(Set<Tenant> tenants) {
-    this.tenants = tenants;
-  }
 
   public String getPassword() {
     return password;
