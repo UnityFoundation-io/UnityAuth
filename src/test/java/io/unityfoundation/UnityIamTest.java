@@ -104,8 +104,7 @@ class UnityIamTest {
         .exchange(request, BearerAccessRefreshToken.class);
     assertEquals(HttpStatus.OK, rsp.getStatus());
     BearerAccessRefreshToken bearer = rsp.body();
-    String accessToken = bearer.getAccessToken();
-    return accessToken;
+    return bearer.getAccessToken();
   }
 
 
