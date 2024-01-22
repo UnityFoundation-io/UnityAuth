@@ -26,7 +26,7 @@ class UnityIamTest {
   @Test
   void testUserDisabled() {
     String accessToken = login("disabled@test.io");
-    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(1L, 1L, false, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest("SYSTEM", "Libre311", List.of("AUTH_SERVICE_EDIT-SYSTEM")))
         .bearerAuth(accessToken);
     HttpResponse<HasPermissionResponse> response = client.toBlocking()
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
@@ -37,7 +37,7 @@ class UnityIamTest {
   @Test
   void testHasSystemPermission() {
     String accessToken = login("person1@test.io");
-    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(1L, 1L, false, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest("SYSTEM", "Libre311", List.of("AUTH_SERVICE_EDIT-SYSTEM")))
         .bearerAuth(accessToken);
     HttpResponse<HasPermissionResponse> response = client.toBlocking()
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
@@ -47,7 +47,7 @@ class UnityIamTest {
   @Test
   void testHasNoSystemPermission() {
     String accessToken = login("test@test.io");
-    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(1L, 1L, false, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest("SYSTEM", "Libre311", List.of("AUTH_SERVICE_EDIT-SYSTEM")))
         .bearerAuth(accessToken);
     HttpResponse<HasPermissionResponse> response = client.toBlocking()
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
@@ -58,7 +58,7 @@ class UnityIamTest {
   @Test
   void testHasTenantPermission() {
     String accessToken = login("person1@test.io");
-    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(2L, 1L, false, List.of("LIBRE311_REQUEST_EDIT-TENANT")))
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest("acme", "Libre311", List.of("LIBRE311_REQUEST_EDIT-TENANT")))
         .bearerAuth(accessToken);
     HttpResponse<HasPermissionResponse> response = client.toBlocking()
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
@@ -68,7 +68,7 @@ class UnityIamTest {
   @Test
   void testHasNoTenantPermission() {
     String accessToken = login("person1@test.io");
-    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(2L, 1L, false, List.of("LIBRE311_REQUEST_VIEW-TENANT")))
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest("acme", "Libre311", List.of("LIBRE311_REQUEST_VIEW-TENANT")))
         .bearerAuth(accessToken);
     HttpResponse<HasPermissionResponse> response = client.toBlocking()
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
@@ -79,7 +79,7 @@ class UnityIamTest {
   @Test
   void testHasSubtenantPermission() {
     String accessToken = login("person1@test.io");
-    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(2L, 1L, true, List.of("LIBRE311_REQUEST_EDIT-SUBTENANT")))
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest("acme", "Libre311", List.of("LIBRE311_REQUEST_EDIT-SUBTENANT")))
         .bearerAuth(accessToken);
     HttpResponse<HasPermissionResponse> response = client.toBlocking()
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
@@ -89,7 +89,7 @@ class UnityIamTest {
   @Test
   void testHasNoSubtenantPermission() {
     String accessToken = login("person1@test.io");
-    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest(2L, 2L, true, List.of("LIBRE311_REQUEST_EDIT-SUBTENANT")))
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest("acme", "Application2", List.of("LIBRE311_REQUEST_EDIT-SUBTENANT")))
         .bearerAuth(accessToken);
     HttpResponse<HasPermissionResponse> response = client.toBlocking()
         .exchange(hasPermissionRequest, HasPermissionResponse.class);

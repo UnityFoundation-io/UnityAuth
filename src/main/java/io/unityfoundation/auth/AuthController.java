@@ -14,6 +14,8 @@ import io.unityfoundation.auth.entities.Permission.PermissionScope;
 import io.unityfoundation.auth.entities.Service;
 import io.unityfoundation.auth.entities.Service.ServiceStatus;
 import io.unityfoundation.auth.entities.ServiceRepo;
+import io.unityfoundation.auth.entities.Tenant;
+import io.unityfoundation.auth.entities.TenantRepo;
 import io.unityfoundation.auth.entities.User;
 import io.unityfoundation.auth.entities.UserRepo;
 import java.util.List;
@@ -25,10 +27,12 @@ public class AuthController {
 
   private final UserRepo userRepo;
   private final ServiceRepo serviceRepo;
+  private final TenantRepo tenantRepo;
 
-  public AuthController(UserRepo userRepo, ServiceRepo serviceRepo) {
+  public AuthController(UserRepo userRepo, ServiceRepo serviceRepo, TenantRepo tenantRepo) {
     this.userRepo = userRepo;
     this.serviceRepo = serviceRepo;
+    this.tenantRepo = tenantRepo;
   }
 
   @Post("/hasPermission")
@@ -40,14 +44,14 @@ public class AuthController {
       return createHasPermissionResponse(false, "The user’s account has been disabled!");
     }
 
-    Optional<Service> service = serviceRepo.findById(requestDTO.serviceId());
+    Optional<Service> service = serviceRepo.findByName(requestDTO.serviceId());
 
     String serviceStatusCheckResult = checkServiceStatus(service);
     if (serviceStatusCheckResult != null) {
       return createHasPermissionResponse(false, serviceStatusCheckResult);
     }
 
-    if (!userRepo.isServiceAvailable(user.getId(), requestDTO.serviceId())) {
+    if (!userRepo.isServiceAvailable(user.getId(), service.get().getId())) {
       return createHasPermissionResponse(false,
           "The requested service is not enabled for the requested tenant!");
     }
@@ -78,13 +82,12 @@ public class AuthController {
   }
 
   private boolean checkUserPermission(User user, HasPermissionRequest requestDTO) {
+    Tenant tenant = tenantRepo.findByName(requestDTO.tenantId());
     List<TenantPermission> userPermissions = userRepo.getTenantPermissionsFor(user.getId()).stream()
         .filter(tenantPermission ->
             PermissionScope.SYSTEM.equals(tenantPermission.permissionScope()) ||
-            (PermissionScope.TENANT.equals(tenantPermission.permissionScope())
-             && tenantPermission.tenantId == requestDTO.tenantId()) ||
-            (PermissionScope.SUBTENANT.equals(tenantPermission.permissionScope())
-             && tenantPermission.tenantId == requestDTO.tenantId() && requestDTO.subtenant()))
+            ((PermissionScope.TENANT.equals(tenantPermission.permissionScope()) || PermissionScope.SUBTENANT.equals(tenantPermission.permissionScope()))
+             && tenantPermission.tenantId == tenant.getId()))
         .toList();
 
     List<String> commonPermissions = userPermissions.stream()

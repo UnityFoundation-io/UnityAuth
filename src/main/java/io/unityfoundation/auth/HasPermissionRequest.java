@@ -6,9 +6,8 @@ import java.util.List;
 
 @Serdeable
 public record HasPermissionRequest(
-    @NotNull Long tenantId,
-    @NotNull Long serviceId,
-    @NotNull boolean subtenant,
+    @NotNull String tenantId,
+    @NotNull String serviceId,
     List<String> permissions
 
 ) {}

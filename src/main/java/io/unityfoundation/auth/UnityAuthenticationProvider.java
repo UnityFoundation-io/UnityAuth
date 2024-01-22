@@ -14,8 +14,8 @@ import io.unityfoundation.auth.entities.User;
 import io.unityfoundation.auth.entities.UserRepo;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Singleton
 public class UnityAuthenticationProvider implements AuthenticationProvider<HttpRequest<?>> {
@@ -40,17 +40,16 @@ public class UnityAuthenticationProvider implements AuthenticationProvider<HttpR
   @Override
   public Publisher<AuthenticationResponse> authenticate(@Nullable HttpRequest<?> httpRequest,
       AuthenticationRequest<?, ?> authenticationRequest) {
-    return Flux.create(emitter -> {
-      User user = findUser(authenticationRequest);
-      AuthenticationFailed authenticationFailed = validate(user, authenticationRequest);
-      if (authenticationFailed != null) {
-        emitter.error(new AuthenticationException(authenticationFailed));
-      } else {
-        emitter.next(AuthenticationResponse.success((String) authenticationRequest.getIdentity()));
-        emitter.complete();
-      }
-    }, FluxSink.OverflowStrategy.ERROR);
-  }
+    return Mono.fromCallable(() -> findUser(authenticationRequest))
+        .subscribeOn(Schedulers.boundedElastic())
+        .flatMap(user -> {
+          AuthenticationFailed authenticationFailed = validate(user, authenticationRequest);
+          if (authenticationFailed != null) {
+            return Mono.error(new AuthenticationException(authenticationFailed));
+          } else {
+            return Mono.just(AuthenticationResponse.success((String) authenticationRequest.getIdentity()));
+          }
+        });  }
 
   private AuthenticationFailed validate(User user,
       AuthenticationRequest<?, ?> authenticationRequest) {
@@ -69,5 +68,6 @@ public class UnityAuthenticationProvider implements AuthenticationProvider<HttpR
     final Object username = authRequest.getIdentity();
     return userRepo.findUserForAuthentication(username.toString()).orElse(null);
   }
+
 }
 
