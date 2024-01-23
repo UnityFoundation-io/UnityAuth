@@ -1,0 +1,11 @@
+FROM maven:3-eclipse-temurin-11-alpine
+
+RUN mvn dependency:get -DremoteRepositories=http://repo1.maven.org/maven2/ -DgroupId=com.google.cloud.sql -DartifactId=mysql-socket-factory-connector-j-8 -Dversion=1.15.2 -Dtransitive=true
+RUN mvn dependency:get -DremoteRepositories=http://repo1.maven.org/maven2/ -DgroupId=com.mysql -DartifactId=mysql-connector-j -Dversion=8.3.0 -Dtransitive=true
+
+RUN mkdir /drivers && find /root/.m2/ -name "*.jar" | xargs cp -t /drivers
+
+FROM flyway/flyway:10-alpine
+
+COPY --from=0 /drivers /flyway/drivers
+COPY src/main/resources/db/migration /flyway/sql
