@@ -3,7 +3,8 @@ CREATE TABLE tenant
     id          bigint AUTO_INCREMENT PRIMARY KEY,
     name        varchar(255) NOT NULL,
     description text,
-    status      varchar(255) NOT NULL
+    status      varchar(255) NOT NULL,
+    UNIQUE (name)
 );
 
 CREATE TABLE service
@@ -11,7 +12,8 @@ CREATE TABLE service
     id          bigint AUTO_INCREMENT PRIMARY KEY,
     name        varchar(255) NOT NULL,
     description text,
-    status      varchar(255)
+    status      varchar(255),
+    UNIQUE (name)
 );
 
 CREATE TABLE tenant_service
@@ -31,14 +33,16 @@ CREATE TABLE permission
     id          bigint AUTO_INCREMENT PRIMARY KEY,
     name        varchar(255) NOT NULL,
     description text,
-    scope       varchar(255)
+    scope       varchar(255),
+    UNIQUE (name)
 );
 
 CREATE TABLE role
 (
     id          bigint AUTO_INCREMENT PRIMARY KEY,
     name        varchar(255) NOT NULL,
-    description text
+    description text,
+    UNIQUE (name)
 );
 
 CREATE TABLE role_permission

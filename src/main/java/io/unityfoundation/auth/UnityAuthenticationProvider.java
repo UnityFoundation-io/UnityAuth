@@ -1,7 +1,6 @@
 package io.unityfoundation.auth;
 
 import static io.micronaut.security.authentication.AuthenticationFailureReason.CREDENTIALS_DO_NOT_MATCH;
-import static io.micronaut.security.authentication.AuthenticationFailureReason.USER_NOT_FOUND;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
@@ -55,7 +54,7 @@ public class UnityAuthenticationProvider implements AuthenticationProvider<HttpR
       AuthenticationRequest<?, ?> authenticationRequest) {
     AuthenticationFailed authenticationFailed = null;
     if (user == null) {
-      authenticationFailed = new AuthenticationFailed(USER_NOT_FOUND);
+      authenticationFailed = new AuthenticationFailed(CREDENTIALS_DO_NOT_MATCH);
     } else if (!passwordEncoder.matches(authenticationRequest.getSecret().toString(),
         user.getPassword())) {
       authenticationFailed = new AuthenticationFailed(CREDENTIALS_DO_NOT_MATCH);
