@@ -33,6 +33,13 @@ dependencies {
   testImplementation("io.micronaut:micronaut-http-client")
   aotPlugins platform("io.micronaut.platform:micronaut-platform:4.2.3")
   aotPlugins("io.micronaut.security:micronaut-security-aot")
+
+  String databaseSelection = System.getenv("UNITYAUTH_DATABASE_DEPENDENCY")
+  if (databaseSelection != null) {
+    databaseSelection.split(',').each {part ->
+      runtimeOnly(part)
+    }
+  }
 }
 
 application {
