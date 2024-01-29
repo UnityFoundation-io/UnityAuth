@@ -1,16 +1,11 @@
-## Micronaut 4.2.4 Documentation
+# Usage
 
-- [User Guide](https://docs.micronaut.io/4.2.4/guide/index.html)
-- [API Reference](https://docs.micronaut.io/4.2.4/api/index.html)
-- [Configuration Reference](https://docs.micronaut.io/4.2.4/guide/configurationreference.html)
-- [Micronaut Guides](https://guides.micronaut.io/index.html)
----
+## build
+With Java 17 installed, from the AuthGenHas directory, build with 
+`./gradlew shadowJar`
 
-- [Shadow Gradle Plugin](https://plugins.gradle.org/plugin/com.github.johnrengelman.shadow)
-- [Micronaut Gradle Plugin documentation](https://micronaut-projects.github.io/micronaut-gradle-plugin/latest/)
-- [GraalVM Gradle Plugin documentation](https://graalvm.github.io/native-build-tools/latest/gradle-plugin.html)
-## Feature serialization-jackson documentation
+## run
+Navigate to build/libs and execute `java -jar AuthGenHash-0.1-all.jar -p`.
 
-- [Micronaut Serialization Jackson Core documentation](https://micronaut-projects.github.io/micronaut-serialization/latest/guide/)
-
-
+The command will accept a password in interactive mode to prevent writing any passwords
+to history.
