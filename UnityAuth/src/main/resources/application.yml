@@ -2,6 +2,17 @@ micronaut:
   application:
     name: unity-iam
   security:
+    endpoints:
+      logout:
+        path: /api/logout
+        get-allowed: true
+      login:
+        path: /api/login
+    intercept-url-map:
+      - pattern: /api/login
+        http-method: POST
+        access:
+          - isAnonymous()
     authentication: bearer
     token:
       jwt:
