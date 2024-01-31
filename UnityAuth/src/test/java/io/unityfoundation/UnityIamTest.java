@@ -99,7 +99,7 @@ class UnityIamTest {
 
   private String login(String username) {
     UsernamePasswordCredentials creds = new UsernamePasswordCredentials(username, "test");
-    HttpRequest<?> request = HttpRequest.POST("/login", creds);
+    HttpRequest<?> request = HttpRequest.POST("/api/login", creds);
     HttpResponse<BearerAccessRefreshToken> rsp = client.toBlocking()
         .exchange(request, BearerAccessRefreshToken.class);
     assertEquals(HttpStatus.OK, rsp.getStatus());
