@@ -39,6 +39,11 @@ public class AuthController {
   public HttpResponse<HasPermissionResponse> hasPermission(@Body HasPermissionRequest requestDTO,
       Authentication authentication) {
 
+    Optional<Tenant> tenantOptional = tenantRepo.findByName(requestDTO.tenantId());
+    if (tenantOptional.isEmpty()) {
+      return createHasPermissionResponse(false, "Cannot find tenant!");
+    }
+
     User user = userRepo.findByEmail(authentication.getName()).orElse(null);
     if (checkUserStatus(user)) {
       return createHasPermissionResponse(false, "The user’s account has been disabled!");
@@ -56,7 +61,7 @@ public class AuthController {
           "The requested service is not enabled for the requested tenant!");
     }
 
-    if (!checkUserPermission(user, requestDTO)) {
+    if (!checkUserPermission(user, tenantOptional.get(), requestDTO.permissions())) {
       return createHasPermissionResponse(false, "The user does not have permission!");
     }
 
@@ -81,8 +86,7 @@ public class AuthController {
     return null;
   }
 
-  private boolean checkUserPermission(User user, HasPermissionRequest requestDTO) {
-    Tenant tenant = tenantRepo.findByName(requestDTO.tenantId());
+  private boolean checkUserPermission(User user, Tenant tenant, List<String> permissions) {
     List<TenantPermission> userPermissions = userRepo.getTenantPermissionsFor(user.getId()).stream()
         .filter(tenantPermission ->
             PermissionScope.SYSTEM.equals(tenantPermission.permissionScope()) ||
@@ -92,7 +96,7 @@ public class AuthController {
 
     List<String> commonPermissions = userPermissions.stream()
         .map(TenantPermission::permissionName)
-        .filter(requestDTO.permissions()::contains)
+        .filter(permissions::contains)
         .toList();
 
     return !commonPermissions.isEmpty();
