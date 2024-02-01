@@ -22,7 +22,7 @@ FROM user_role ur
          inner join tenant_service ts on ts.tenant_id = t.id
          INNER join service s on s.id = ts.service_id
 where u.id = :userId
-  and t.status = 'ACTIVE'
+  and t.status = 'ENABLED'
   and s.id = :serviceId
   and s.status = 'ENABLED';
 """)

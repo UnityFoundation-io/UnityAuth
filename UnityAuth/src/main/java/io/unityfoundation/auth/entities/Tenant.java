@@ -14,7 +14,7 @@ public class Tenant {
   private TenantStatus status;
 
   public enum TenantStatus {
-    ACTIVE, INACTIVE, DISABLED
+    ENABLED, DISABLED
   }
 
   public Long getId() {
