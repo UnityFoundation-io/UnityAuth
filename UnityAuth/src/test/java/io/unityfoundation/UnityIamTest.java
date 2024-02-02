@@ -56,6 +56,17 @@ class UnityIamTest {
   }
 
   @Test
+  void testTenantDoesNotExist() {
+    String accessToken = login("test@test.io");
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest("DNE", "Libre311", List.of("AUTH_SERVICE_EDIT-SYSTEM")))
+            .bearerAuth(accessToken);
+    HttpResponse<HasPermissionResponse> response = client.toBlocking()
+            .exchange(hasPermissionRequest, HasPermissionResponse.class);
+    assertEquals("Cannot find tenant!", response.getBody().get().errorMessage());
+    assertEquals(Boolean.FALSE, response.getBody().get().hasPermission());
+  }
+
+  @Test
   void testHasTenantPermission() {
     String accessToken = login("person1@test.io");
     HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/hasPermission", new HasPermissionRequest("acme", "Libre311", List.of("LIBRE311_REQUEST_EDIT-TENANT")))
