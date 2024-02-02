@@ -42,6 +42,7 @@ class UnityIamTest {
     HttpResponse<HasPermissionResponse> response = client.toBlocking()
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
     assertEquals(Boolean.TRUE, response.getBody().get().hasPermission());
+    assertEquals("person1@test.io", response.getBody().get().userEmail());
   }
 
   @Test

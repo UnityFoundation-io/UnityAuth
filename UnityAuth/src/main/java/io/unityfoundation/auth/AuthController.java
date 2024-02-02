@@ -41,31 +41,31 @@ public class AuthController {
 
     Optional<Tenant> tenantOptional = tenantRepo.findByName(requestDTO.tenantId());
     if (tenantOptional.isEmpty()) {
-      return createHasPermissionResponse(false, "Cannot find tenant!");
+      return createHasPermissionResponse(false, null,"Cannot find tenant!");
     }
 
     User user = userRepo.findByEmail(authentication.getName()).orElse(null);
     if (checkUserStatus(user)) {
-      return createHasPermissionResponse(false, "The user’s account has been disabled!");
+      return createHasPermissionResponse(false, null, "The user’s account has been disabled!");
     }
 
     Optional<Service> service = serviceRepo.findByName(requestDTO.serviceId());
 
     String serviceStatusCheckResult = checkServiceStatus(service);
     if (serviceStatusCheckResult != null) {
-      return createHasPermissionResponse(false, serviceStatusCheckResult);
+      return createHasPermissionResponse(false, null, serviceStatusCheckResult);
     }
 
     if (!userRepo.isServiceAvailable(user.getId(), service.get().getId())) {
-      return createHasPermissionResponse(false,
+      return createHasPermissionResponse(false, null,
           "The requested service is not enabled for the requested tenant!");
     }
 
     if (!checkUserPermission(user, tenantOptional.get(), requestDTO.permissions())) {
-      return createHasPermissionResponse(false, "The user does not have permission!");
+      return createHasPermissionResponse(false, null, "The user does not have permission!");
     }
 
-    return createHasPermissionResponse(true, null);
+    return createHasPermissionResponse(true, user.getEmail(), null);
   }
 
   private boolean checkUserStatus(User user) {
@@ -103,13 +103,15 @@ public class AuthController {
   }
 
   private HttpResponse<HasPermissionResponse> createHasPermissionResponse(boolean hasPermission,
-      String message) {
-    return HttpResponse.ok(new HasPermissionResponse(hasPermission, message));
+                                                                          String userEmail,
+                                                                          String message) {
+    return HttpResponse.ok(new HasPermissionResponse(hasPermission, userEmail, message));
   }
 
   @Serdeable
   public record HasPermissionResponse(
       boolean hasPermission,
+      @Nullable String userEmail,
       @Nullable String errorMessage
   ) {
 
