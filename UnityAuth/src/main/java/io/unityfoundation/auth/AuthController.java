@@ -41,28 +41,28 @@ public class AuthController {
 
     Optional<Tenant> tenantOptional = tenantRepo.findByName(requestDTO.tenantId());
     if (tenantOptional.isEmpty()) {
-      return createHasPermissionResponse(false, null,"Cannot find tenant!");
+      return createHasPermissionResponse(false, authentication.getName(),"Cannot find tenant!");
     }
 
     User user = userRepo.findByEmail(authentication.getName()).orElse(null);
     if (checkUserStatus(user)) {
-      return createHasPermissionResponse(false, null, "The user’s account has been disabled!");
+      return createHasPermissionResponse(false, authentication.getName(), "The user’s account has been disabled!");
     }
 
     Optional<Service> service = serviceRepo.findByName(requestDTO.serviceId());
 
     String serviceStatusCheckResult = checkServiceStatus(service);
     if (serviceStatusCheckResult != null) {
-      return createHasPermissionResponse(false, null, serviceStatusCheckResult);
+      return createHasPermissionResponse(false, user.getEmail(), serviceStatusCheckResult);
     }
 
     if (!userRepo.isServiceAvailable(user.getId(), service.get().getId())) {
-      return createHasPermissionResponse(false, null,
+      return createHasPermissionResponse(false, user.getEmail(),
           "The requested service is not enabled for the requested tenant!");
     }
 
     if (!checkUserPermission(user, tenantOptional.get(), requestDTO.permissions())) {
-      return createHasPermissionResponse(false, null, "The user does not have permission!");
+      return createHasPermissionResponse(false, user.getEmail(), "The user does not have permission!");
     }
 
     return createHasPermissionResponse(true, user.getEmail(), null);
