@@ -19,6 +19,4 @@ where ts.status <> 'DISABLED'
   and ts.tenant_id = :tenantId
      """)
   Optional<Service> findByTenantId(Long serviceId, Long tenantId);
-
-  Optional<Service> findByName(String s);
 }
