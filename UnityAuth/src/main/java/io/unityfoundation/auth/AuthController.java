@@ -39,7 +39,7 @@ public class AuthController {
   public HttpResponse<HasPermissionResponse> hasPermission(@Body HasPermissionRequest requestDTO,
       Authentication authentication) {
 
-    Optional<Tenant> tenantOptional = tenantRepo.findByName(requestDTO.tenantId());
+    Optional<Tenant> tenantOptional = tenantRepo.findById(requestDTO.tenantId());
     if (tenantOptional.isEmpty()) {
       return createHasPermissionResponse(false, authentication.getName(),"Cannot find tenant!", List.of());
     }
@@ -49,7 +49,7 @@ public class AuthController {
       return createHasPermissionResponse(false, authentication.getName(), "The user’s account has been disabled!", List.of());
     }
 
-    Optional<Service> service = serviceRepo.findByName(requestDTO.serviceId());
+    Optional<Service> service = serviceRepo.findById(requestDTO.serviceId());
 
     String serviceStatusCheckResult = checkServiceStatus(service);
     if (serviceStatusCheckResult != null) {
