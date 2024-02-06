@@ -41,31 +41,32 @@ public class AuthController {
 
     Optional<Tenant> tenantOptional = tenantRepo.findByName(requestDTO.tenantId());
     if (tenantOptional.isEmpty()) {
-      return createHasPermissionResponse(false, "Cannot find tenant!");
+      return createHasPermissionResponse(false, authentication.getName(),"Cannot find tenant!", List.of());
     }
 
     User user = userRepo.findByEmail(authentication.getName()).orElse(null);
     if (checkUserStatus(user)) {
-      return createHasPermissionResponse(false, "The user’s account has been disabled!");
+      return createHasPermissionResponse(false, authentication.getName(), "The user’s account has been disabled!", List.of());
     }
 
     Optional<Service> service = serviceRepo.findByName(requestDTO.serviceId());
 
     String serviceStatusCheckResult = checkServiceStatus(service);
     if (serviceStatusCheckResult != null) {
-      return createHasPermissionResponse(false, serviceStatusCheckResult);
+      return createHasPermissionResponse(false, user.getEmail(), serviceStatusCheckResult, List.of());
     }
 
     if (!userRepo.isServiceAvailable(user.getId(), service.get().getId())) {
-      return createHasPermissionResponse(false,
-          "The requested service is not enabled for the requested tenant!");
+      return createHasPermissionResponse(false, user.getEmail(),
+          "The requested service is not enabled for the requested tenant!", List.of());
     }
 
-    if (!checkUserPermission(user, tenantOptional.get(), requestDTO.permissions())) {
-      return createHasPermissionResponse(false, "The user does not have permission!");
+    List<String> commonPermissions = checkUserPermission(user, tenantOptional.get(), requestDTO.permissions());
+    if (commonPermissions.isEmpty()) {
+      return createHasPermissionResponse(false, user.getEmail(), "The user does not have permission!", commonPermissions);
     }
 
-    return createHasPermissionResponse(true, null);
+    return createHasPermissionResponse(true, user.getEmail(), null, commonPermissions);
   }
 
   private boolean checkUserStatus(User user) {
@@ -86,7 +87,7 @@ public class AuthController {
     return null;
   }
 
-  private boolean checkUserPermission(User user, Tenant tenant, List<String> permissions) {
+  private List<String> checkUserPermission(User user, Tenant tenant, List<String> permissions) {
     List<TenantPermission> userPermissions = userRepo.getTenantPermissionsFor(user.getId()).stream()
         .filter(tenantPermission ->
             PermissionScope.SYSTEM.equals(tenantPermission.permissionScope()) ||
@@ -99,18 +100,21 @@ public class AuthController {
         .filter(permissions::contains)
         .toList();
 
-    return !commonPermissions.isEmpty();
+    return commonPermissions;
   }
 
   private HttpResponse<HasPermissionResponse> createHasPermissionResponse(boolean hasPermission,
-      String message) {
-    return HttpResponse.ok(new HasPermissionResponse(hasPermission, message));
+                                                                          String userEmail,
+                                                                          String message, List<String> permissions) {
+    return HttpResponse.ok(new HasPermissionResponse(hasPermission, userEmail, message, permissions));
   }
 
   @Serdeable
   public record HasPermissionResponse(
       boolean hasPermission,
-      @Nullable String errorMessage
+      @Nullable String userEmail,
+      @Nullable String errorMessage,
+      List<String> permissions
   ) {
 
   }
