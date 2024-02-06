@@ -1,7 +1,5 @@
 package io.unityfoundation;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -15,6 +13,8 @@ import io.unityfoundation.auth.HasPermissionRequest;
 import jakarta.inject.Inject;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest
 class UnityIamTest {
@@ -43,6 +43,7 @@ class UnityIamTest {
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
     assertEquals(Boolean.TRUE, response.getBody().get().hasPermission());
     assertEquals("person1@test.io", response.getBody().get().userEmail());
+    assertTrue(response.getBody().get().permissions().contains("AUTH_SERVICE_EDIT-SYSTEM"));
   }
 
   @Test
@@ -54,6 +55,7 @@ class UnityIamTest {
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
     assertEquals("The requested service is not enabled for the requested tenant!", response.getBody().get().errorMessage());
     assertEquals(Boolean.FALSE, response.getBody().get().hasPermission());
+    assertNull(response.getBody().get().permissions());
   }
 
   @Test
@@ -75,6 +77,7 @@ class UnityIamTest {
     HttpResponse<HasPermissionResponse> response = client.toBlocking()
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
     assertEquals(Boolean.TRUE, response.getBody().get().hasPermission());
+    assertTrue(response.getBody().get().permissions().contains("LIBRE311_REQUEST_EDIT-TENANT"));
   }
 
   @Test
@@ -86,6 +89,7 @@ class UnityIamTest {
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
     assertEquals("The user does not have permission!", response.getBody().get().errorMessage());
     assertEquals(Boolean.FALSE, response.getBody().get().hasPermission());
+    assertNull(response.getBody().get().permissions());
   }
 
   @Test
@@ -96,6 +100,7 @@ class UnityIamTest {
     HttpResponse<HasPermissionResponse> response = client.toBlocking()
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
     assertEquals(Boolean.TRUE, response.getBody().get().hasPermission());
+    assertTrue(response.getBody().get().permissions().contains("LIBRE311_REQUEST_EDIT-SUBTENANT"));
   }
 
   @Test
@@ -107,6 +112,7 @@ class UnityIamTest {
         .exchange(hasPermissionRequest, HasPermissionResponse.class);
     assertEquals(Boolean.FALSE, response.getBody().get().hasPermission());
     assertEquals("The requested service is not enabled for the requested tenant!", response.getBody().get().errorMessage());
+    assertNull(response.getBody().get().permissions());
   }
 
   private String login(String username) {
@@ -118,8 +124,4 @@ class UnityIamTest {
     BearerAccessRefreshToken bearer = rsp.body();
     return bearer.getAccessToken();
   }
-
-
-
 }
-
