@@ -1,6 +1,14 @@
 micronaut:
   application:
     name: unity-iam
+  server:
+    cors:
+      enabled: true
+      configurations:
+        allowedOrigins:
+          - http://localhost:3000
+          - localhost:3000
+          - http://127.0.0.1:3000
   security:
     authentication: bearer
     token:
