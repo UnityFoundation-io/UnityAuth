@@ -1,0 +1,24 @@
+micronaut:
+  application:
+    name: unity-iam
+  server:
+    cors:
+      enabled: true
+      configurations:
+        allowedOrigins:
+          - http://localhost:3000
+          - localhost:3000
+          - http://127.0.0.1:3000
+  security:
+    authentication: bearer
+datasources:
+  default:
+    url: jdbc:mysql://localhost:13306/test?allowPublicKeyRetrieval=true&useSSL=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: test
+    db-type: mysql
+flyway:
+  datasources:
+    default:
+      enabled: true

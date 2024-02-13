@@ -1,0 +1,24 @@
+micronaut:
+  application:
+    name: unity-iam
+  security:
+    endpoints:
+      logout:
+        path: /api/logout
+        get-allowed: true
+      login:
+        path: /api/login
+    intercept-url-map:
+      - pattern: /api/login
+        http-method: POST
+        access:
+          - isAnonymous()
+    authentication: bearer
+datasources:
+  default:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    db-type: mysql
+flyway:
+  datasources:
+    default:
+      enabled: true
