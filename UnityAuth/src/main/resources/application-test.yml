@@ -3,12 +3,15 @@ micronaut:
     name: unity-iam
   security:
     authentication: bearer
+    enabled: true
     token:
+      enabled: true
       jwt:
+        enabled: true
         signatures:
-          secret:
-            generator:
-              secret: '"${UNITY_SIGNATURE_SECRET:123456789012345123456789012345123456789012345123456789012345123456789012345}"'
+          jwks:
+            unity:
+              url: http://localhost:8080/keys
 datasources:
   default:
     driver-class-name: com.mysql.cj.jdbc.Driver
