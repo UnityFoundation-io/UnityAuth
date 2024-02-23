@@ -87,7 +87,7 @@ VALUES (6, 15), -- LIBRE311_REQUEST_EDIT-SUBTENANT
        (6, 16); -- LIBRE311_REQUEST_VIEW-SUBTENANT
 
 
-
+-- Password for all the following accounts is 'test'
 -- Unity Administrator
 INSERT INTO user (id, email, password, status) VALUES
     (1, 'unity_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
