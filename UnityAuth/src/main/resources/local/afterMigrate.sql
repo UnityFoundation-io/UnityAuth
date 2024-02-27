@@ -8,15 +8,15 @@ DELETE FROM permission;
 DELETE FROM role;
 
 -- Create a tenant
-INSERT INTO tenant (id, name, description, status) VALUES(1, 'stl', 'St. Louis Metro Area', 'ENABLED');
+INSERT IGNORE INTO tenant (id, name, description, status) VALUES(1, 'stl', 'St. Louis Metro Area', 'ENABLED');
 -- Create Libre311 Service
-INSERT INTO service (id, name, description, status) VALUES(1, 'Libre311', 'Libre311', 'ENABLED');
+INSERT IGNORE INTO service (id, name, description, status) VALUES(1, 'Libre311', 'Libre311', 'ENABLED');
 
 -- Add Libre311 Service to stl tenant
-INSERT INTO tenant_service (tenant_id, service_id, status) VALUES(1, 1, 'ENABLED');
+INSERT IGNORE INTO tenant_service (tenant_id, service_id, status) VALUES(1, 1, 'ENABLED');
 
 
-INSERT INTO permission (id, name, description, scope)
+INSERT IGNORE INTO permission (id, name, description, scope)
 VALUES (1, 'AUTH_SERVICE_EDIT-SYSTEM', NULL, 'SYSTEM'),
        (2, 'AUTH_SERVICE_VIEW-SYSTEM', NULL, 'SYSTEM'),
        (3, 'AUTH_SERVICE_EDIT-TENANT', NULL, 'TENANT'),
@@ -35,7 +35,7 @@ VALUES (1, 'AUTH_SERVICE_EDIT-SYSTEM', NULL, 'SYSTEM'),
        (16, 'LIBRE311_REQUEST_VIEW-SUBTENANT', NULL, 'SUBTENANT');
 
 
-INSERT INTO role (id, name, description)
+INSERT IGNORE INTO role (id, name, description)
 VALUES (1, 'Unity Administrator', 'An administrator of the Unity Platform. A user with this role can perform any operation.'),
        (2, 'Tenant Administrator', 'An administrator for a tenant. A user with this role can perform any operation for the tenant.'),
        (3, 'Libre311 Administrator', 'An administrator for Libre311. A user with this role can perform any operation in Libre311 on behalf of their tenant.'),
@@ -45,7 +45,7 @@ VALUES (1, 'Unity Administrator', 'An administrator of the Unity Platform. A use
 
 
 -- Unity Administrator
-INSERT INTO role_permission (role_id, permission_id)
+INSERT IGNORE INTO role_permission (role_id, permission_id)
 VALUES (1, 1),  -- AUTH_SERVICE_EDIT-SYSTEM
        (1, 2),  -- AUTH_SERVICE_VIEW-SYSTEM
        (1, 5),  -- LIBRE311_ADMIN_EDIT-SYSTEM
@@ -54,7 +54,7 @@ VALUES (1, 1),  -- AUTH_SERVICE_EDIT-SYSTEM
        (1, 12); -- LIBRE311_REQUEST_VIEW-SYSTEM
 
 -- Tenant Administrator
-INSERT INTO role_permission (role_id, permission_id)
+INSERT IGNORE INTO role_permission (role_id, permission_id)
 VALUES (2, 3),  -- AUTH_SERVICE_EDIT-TENANT
        (2, 4),  -- AUTH_SERVICE_VIEW-TENANT
        (2, 7),  -- LIBRE311_ADMIN_EDIT-TENANT
@@ -63,85 +63,85 @@ VALUES (2, 3),  -- AUTH_SERVICE_EDIT-TENANT
        (2, 14); -- LIBRE311_REQUEST_VIEW-TENANT
 
 -- Libre311 Administrator
-INSERT INTO role_permission (role_id, permission_id)
+INSERT IGNORE INTO role_permission (role_id, permission_id)
 VALUES (3, 7),  -- LIBRE311_ADMIN_EDIT-TENANT
        (3, 8),  -- LIBRE311_ADMIN_VIEW-TENANT
        (3, 13), -- LIBRE311_REQUEST_EDIT-TENANT
        (3, 14); -- LIBRE311_REQUEST_VIEW-TENANT
 
 -- Libre311 Request Manager
-INSERT INTO role_permission (role_id, permission_id)
+INSERT IGNORE INTO role_permission (role_id, permission_id)
 VALUES (4, 13), -- LIBRE311_REQUEST_EDIT-TENANT
        (4, 14); -- LIBRE311_REQUEST_VIEW-TENANT
 
 -- Libre311 Jurisdiction Administrator
-INSERT INTO role_permission (role_id, permission_id)
+INSERT IGNORE INTO role_permission (role_id, permission_id)
 VALUES (5, 9),  -- LIBRE311_ADMIN_EDIT-SUBTENANT
        (5, 10), -- LIBRE311_ADMIN_VIEW-SUBTENANT
        (5, 15), -- LIBRE311_REQUEST_EDIT-SUBTENANT
        (5, 16); -- LIBRE311_REQUEST_VIEW-SUBTENANT
 
 -- Libre311 Jurisdiction Request Manager
-INSERT INTO role_permission (role_id, permission_id)
+INSERT IGNORE INTO role_permission (role_id, permission_id)
 VALUES (6, 15), -- LIBRE311_REQUEST_EDIT-SUBTENANT
        (6, 16); -- LIBRE311_REQUEST_VIEW-SUBTENANT
 
 
 -- Password for all the following accounts is 'test'
 -- Unity Administrator
-INSERT INTO user (id, email, password, status) VALUES
-    (1, 'unity_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+INSERT IGNORE INTO user (id, email, password, status) VALUES
+    (1, 'unity_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Tenant Administrator
-INSERT INTO user (id, email, password, status) VALUES
-    (2, 'tenant_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+INSERT IGNORE INTO user (id, email, password, status) VALUES
+    (2, 'tenant_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Libre311 Administrator
-INSERT INTO user (id, email, password, status) VALUES
-    (3, 'libre311_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+INSERT IGNORE INTO user (id, email, password, status) VALUES
+    (3, 'libre311_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Libre311 Request Manager
-INSERT INTO user (id, email, password, status) VALUES
-    (4, 'libre311_request_manager@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+INSERT IGNORE INTO user (id, email, password, status) VALUES
+    (4, 'libre311_request_manager@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Libre311 Jurisdiction Administrator
-INSERT INTO user (id, email, password, status) VALUES
-    (5, 'libre311_jurisdiction_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+INSERT IGNORE INTO user (id, email, password, status) VALUES
+    (5, 'libre311_jurisdiction_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Libre311 Jurisdiction Request Manager
-INSERT INTO user (id, email, password, status) VALUES
-    (6, 'libre311_jurisdiction_request_manager@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+INSERT IGNORE INTO user (id, email, password, status) VALUES
+    (6, 'libre311_jurisdiction_request_manager@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 
 -- Stl sub-tenant admin
-INSERT INTO user (id, email, password, status) VALUES
-    (7, 'stl_subtenant_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+INSERT IGNORE INTO user (id, email, password, status) VALUES
+    (7, 'stl_subtenant_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Unity Administrator
-INSERT INTO user_role (tenant_id, user_id, role_id) VALUES
+INSERT IGNORE INTO user_role (tenant_id, user_id, role_id) VALUES
     (1, 1, 1);
 
 -- Tenant Administrator
-INSERT INTO user_role (tenant_id, user_id, role_id) VALUES
+INSERT IGNORE INTO user_role (tenant_id, user_id, role_id) VALUES
     (1, 2, 2);
 
 -- Libre311 Administrator
-INSERT INTO user_role (tenant_id, user_id, role_id) VALUES
+INSERT IGNORE INTO user_role (tenant_id, user_id, role_id) VALUES
     (1, 3, 3);
 
 -- Libre311 Request Manager
-INSERT INTO user_role (tenant_id, user_id, role_id) VALUES
+INSERT IGNORE INTO user_role (tenant_id, user_id, role_id) VALUES
     (1, 4, 4);
 
 -- Libre311 Jurisdiction Administrator
-INSERT INTO user_role (tenant_id, user_id, role_id) VALUES
+INSERT IGNORE INTO user_role (tenant_id, user_id, role_id) VALUES
     (1, 5, 5);
 
 -- Libre311 Jurisdiction Request Manager
-INSERT INTO user_role (tenant_id, user_id, role_id) VALUES
+INSERT IGNORE INTO user_role (tenant_id, user_id, role_id) VALUES
     (1, 6, 6);
 
 
 -- Stl sub-tenant admin
-INSERT INTO user_role (tenant_id, user_id, role_id) VALUES
+INSERT IGNORE INTO user_role (tenant_id, user_id, role_id) VALUES
     (1, 7, 5);

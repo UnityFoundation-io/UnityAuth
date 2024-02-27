@@ -13,6 +13,3 @@ services:
       MYSQL_DATABASE: test
     ports:
       - "13306:3306"
-    volumes:
-      - ./src/main/resources/db/migration:/docker-entrypoint-initdb.d
-      - ./local-data.sql:/docker-entrypoint-initdb.d/local-data.sql
