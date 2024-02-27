@@ -90,32 +90,32 @@ VALUES (6, 15), -- LIBRE311_REQUEST_EDIT-SUBTENANT
 -- Password for all the following accounts is 'test'
 -- Unity Administrator
 INSERT INTO user (id, email, password, status) VALUES
-    (1, 'unity_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+    (1, 'unity_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Tenant Administrator
 INSERT INTO user (id, email, password, status) VALUES
-    (2, 'tenant_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+    (2, 'tenant_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Libre311 Administrator
 INSERT INTO user (id, email, password, status) VALUES
-    (3, 'libre311_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+    (3, 'libre311_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Libre311 Request Manager
 INSERT INTO user (id, email, password, status) VALUES
-    (4, 'libre311_request_manager@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+    (4, 'libre311_request_manager@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Libre311 Jurisdiction Administrator
 INSERT INTO user (id, email, password, status) VALUES
-    (5, 'libre311_jurisdiction_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+    (5, 'libre311_jurisdiction_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Libre311 Jurisdiction Request Manager
 INSERT INTO user (id, email, password, status) VALUES
-    (6, 'libre311_jurisdiction_request_manager@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+    (6, 'libre311_jurisdiction_request_manager@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 
 -- Stl sub-tenant admin
 INSERT INTO user (id, email, password, status) VALUES
-    (7, 'stl_subtenant_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'active');
+    (7, 'stl_subtenant_admin@example.com', '$2a$10$YJetsyoS.EzlVlb249w07uBR8uSqgtlqVH9Hl7bsHtvvwdKAhJp82', 'ENABLED');
 
 -- Unity Administrator
 INSERT INTO user_role (tenant_id, user_id, role_id) VALUES
