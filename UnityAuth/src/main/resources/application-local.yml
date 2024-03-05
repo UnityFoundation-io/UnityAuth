@@ -5,10 +5,13 @@ micronaut:
     cors:
       enabled: true
       configurations:
-        allowedOrigins:
-          - http://localhost:3000
-          - localhost:3000
-          - http://127.0.0.1:3000
+        web:
+          allowed-origins-regex: '^http:\/\/(.*?)localhost:3000$'
+          allowedOrigins:
+            - http://localhost:3000
+            - localhost:3000
+            - http://127.0.0.1:3000
+
   security:
     authentication: bearer
 datasources:
