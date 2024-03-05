@@ -18,8 +18,8 @@ micronaut:
     cors:
       enabled: true
       configurations:
-        allowedOrigins:
-          - ${LIBRE311_UI_BASE_URL}
+        web:
+          allowed-origins-regex: ${LIBRE311_UI_BASE_URL}
 datasources:
   default:
     driver-class-name: com.mysql.cj.jdbc.Driver
