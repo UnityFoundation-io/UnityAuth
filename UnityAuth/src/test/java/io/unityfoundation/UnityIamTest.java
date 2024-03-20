@@ -49,6 +49,8 @@ class UnityIamTest {
     assertEquals(Boolean.TRUE, response.getBody().get().hasPermission());
     assertEquals("person1@test.io", response.getBody().get().userEmail());
     assertTrue(response.getBody().get().permissions().contains("AUTH_SERVICE_EDIT-SYSTEM"));
+    assertEquals("Person", response.getBody().get().firstName());
+    assertEquals("One", response.getBody().get().lastName());
   }
 
   @Test
