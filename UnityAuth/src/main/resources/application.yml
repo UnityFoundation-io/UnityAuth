@@ -8,6 +8,8 @@ micronaut:
         get-allowed: true
       login:
         path: /api/login
+      introspection:
+        path: /api/token_info
     intercept-url-map:
       - pattern: /api/login
         http-method: POST
