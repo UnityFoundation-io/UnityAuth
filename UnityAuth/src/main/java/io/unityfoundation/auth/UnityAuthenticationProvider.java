@@ -16,6 +16,8 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.Map;
+
 @Singleton
 public class UnityAuthenticationProvider implements AuthenticationProvider<HttpRequest<?>> {
 
@@ -46,7 +48,10 @@ public class UnityAuthenticationProvider implements AuthenticationProvider<HttpR
           if (authenticationFailed != null) {
             return Mono.error(new AuthenticationException(authenticationFailed));
           } else {
-            return Mono.just(AuthenticationResponse.success((String) authenticationRequest.getIdentity()));
+            return Mono.just(AuthenticationResponse.success(
+                    (String) authenticationRequest.getIdentity(),
+                    Map.of("first_name", user.getFirstName(), "last_name", user.getLastName())
+            ));
           }
         });  }
 
