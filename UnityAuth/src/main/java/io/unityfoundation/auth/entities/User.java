@@ -15,6 +15,10 @@ public class User {
   @NotNull
   private String email;
 
+  private String firstName;
+
+  private String lastName;
+
   private UserStatus status;
 
   private String password;
@@ -29,6 +33,22 @@ public class User {
 
   public enum UserStatus {
     ENABLED, DISABLED
+  }
+
+  public String getFirstName() {
+    return firstName;
+  }
+
+  public void setFirstName(String firstName) {
+    this.firstName = firstName;
+  }
+
+  public String getLastName() {
+    return lastName;
+  }
+
+  public void setLastName(String lastName) {
+    this.lastName = lastName;
   }
 
   public Long getId() {

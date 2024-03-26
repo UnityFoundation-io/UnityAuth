@@ -32,6 +32,8 @@ where u.id = :userId
       SELECT id,
        password,
        email,
+       first_name,
+       last_name,
        status
 FROM user
 WHERE email = :email

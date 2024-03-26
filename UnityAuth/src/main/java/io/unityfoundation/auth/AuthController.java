@@ -57,8 +57,7 @@ public class AuthController {
     }
 
     if (!userRepo.isServiceAvailable(user.getId(), service.get().getId())) {
-      return createHasPermissionResponse(false, user.getEmail(),
-          "The requested service is not enabled for the requested tenant!", List.of());
+      return createHasPermissionResponse(false, user.getEmail(), "The requested service is not enabled for the requested tenant!", List.of());
     }
 
     List<String> commonPermissions = checkUserPermission(user, tenantOptional.get(), requestDTO.permissions());
@@ -105,7 +104,8 @@ public class AuthController {
 
   private HttpResponse<HasPermissionResponse> createHasPermissionResponse(boolean hasPermission,
                                                                           String userEmail,
-                                                                          String message, List<String> permissions) {
+                                                                          String message,
+                                                                          List<String> permissions) {
     return HttpResponse.ok(new HasPermissionResponse(hasPermission, userEmail, message, permissions));
   }
 
