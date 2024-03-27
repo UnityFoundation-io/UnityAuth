@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Singleton
 public class UnityAuthenticationProvider implements AuthenticationProvider<HttpRequest<?>> {
@@ -50,10 +51,14 @@ public class UnityAuthenticationProvider implements AuthenticationProvider<HttpR
           } else {
             return Mono.just(AuthenticationResponse.success(
                     (String) authenticationRequest.getIdentity(),
-                    Map.of("first_name", user.getFirstName(), "last_name", user.getLastName())
+                    Map.of(
+                            "first_name", Objects.toString(user.getFirstName(), ""),
+                            "last_name", Objects.toString(user.getLastName(), "")
+                    )
             ));
           }
-        });  }
+        });
+  }
 
   private AuthenticationFailed validate(User user,
       AuthenticationRequest<?, ?> authenticationRequest) {
