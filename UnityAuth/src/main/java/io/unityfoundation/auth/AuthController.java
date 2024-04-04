@@ -6,7 +6,6 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.security.annotation.Secured;
@@ -41,19 +40,22 @@ public class AuthController {
     this.tenantRepo = tenantRepo;
   }
 
-  @Get("/permissions")
-  public HttpResponse<UserPermissionsResponse> permissions(@Body UserPermissionsRequest requestDTO,
+  @Post("/principal/permissions")
+  public UserPermissionsResponse permissions(@Body UserPermissionsRequest requestDTO,
       Authentication authentication) {
-    Tenant tenant = tenantRepo.findById(requestDTO.tenantId())
-        .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "No tenant found."));
+    Optional<Tenant> maybeTenant = tenantRepo.findById(requestDTO.tenantId());
+    if (maybeTenant.isEmpty()){
+      return new UserPermissionsResponse.Failure("No tenant found.");
+    }
+    Tenant tenant = maybeTenant.get();
 
     if (!tenant.getStatus().equals(TenantStatus.ENABLED)){
-      throw new HttpStatusException(HttpStatus.FORBIDDEN, "The tenant is not enabled.");
+      return new UserPermissionsResponse.Failure("The tenant is not enabled.");
     }
 
     User user = userRepo.findByEmail(authentication.getName()).orElse(null);
     if (checkUserStatus(user)) {
-      throw new HttpStatusException(HttpStatus.FORBIDDEN, "The user's account has been disabled.");
+      return new UserPermissionsResponse.Failure("The users account has been disabled.");
     }
 
     Service service = serviceRepo.findById(requestDTO.serviceId())
@@ -62,11 +64,17 @@ public class AuthController {
     if (service.getStatus() == ServiceStatus.DISABLED) {
       throw new HttpStatusException(HttpStatus.FORBIDDEN, "The service is disabled.");
     } else if (service.getStatus() == ServiceStatus.DOWN_FOR_MAINTENANCE) {
+
       throw new HttpStatusException(HttpStatus.SERVICE_UNAVAILABLE,
           "The service is down for maintenance.");
     }
 
-    return HttpResponse.ok(new UserPermissionsResponse(getPermissionsFor(user, tenant)));
+    if (!userRepo.isServiceAvailable(user.getId(), service.getId())) {
+      return new UserPermissionsResponse.Failure(
+          "The Tenant and/or Service is not available for this user");
+    }
+
+    return new UserPermissionsResponse.Success(getPermissionsFor(user, tenant));
   }
 
   @Post("/hasPermission")
@@ -169,13 +177,18 @@ public class AuthController {
 
   }
 
+
+  public sealed interface UserPermissionsResponse {
+    @Serdeable
+    record Success(List<String> permissions) implements UserPermissionsResponse {}
+    @Serdeable
+    record Failure(String errorMessage) implements  UserPermissionsResponse {}
+  }
+
   @Serdeable
   public record UserPermissionsRequest(@NotNull Long tenantId,
                                        @NotNull Long serviceId) {
 
   }
-
-  @Serdeable
-  public record UserPermissionsResponse(List<String> permissions){}
 
 }
