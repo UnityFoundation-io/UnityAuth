@@ -3,9 +3,11 @@ package io.unityfoundation.auth;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
@@ -15,11 +17,14 @@ import io.unityfoundation.auth.entities.Service;
 import io.unityfoundation.auth.entities.Service.ServiceStatus;
 import io.unityfoundation.auth.entities.ServiceRepo;
 import io.unityfoundation.auth.entities.Tenant;
+import io.unityfoundation.auth.entities.Tenant.TenantStatus;
 import io.unityfoundation.auth.entities.TenantRepo;
 import io.unityfoundation.auth.entities.User;
 import io.unityfoundation.auth.entities.UserRepo;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiPredicate;
 
 @Secured(SecurityRule.IS_AUTHENTICATED)
 @Controller("/api")
@@ -33,6 +38,43 @@ public class AuthController {
     this.userRepo = userRepo;
     this.serviceRepo = serviceRepo;
     this.tenantRepo = tenantRepo;
+  }
+
+  @Post("/principal/permissions")
+  public UserPermissionsResponse permissions(@Body UserPermissionsRequest requestDTO,
+      Authentication authentication) {
+    Optional<Tenant> maybeTenant = tenantRepo.findById(requestDTO.tenantId());
+    if (maybeTenant.isEmpty()){
+      return new UserPermissionsResponse.Failure("No tenant found.");
+    }
+    Tenant tenant = maybeTenant.get();
+
+    if (!tenant.getStatus().equals(TenantStatus.ENABLED)){
+      return new UserPermissionsResponse.Failure("The tenant is not enabled.");
+    }
+
+    User user = userRepo.findByEmail(authentication.getName()).orElse(null);
+    if (checkUserStatus(user)) {
+      return new UserPermissionsResponse.Failure("The users account has been disabled.");
+    }
+
+    Service service = serviceRepo.findById(requestDTO.serviceId())
+        .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Service not found."));
+
+    if (service.getStatus() == ServiceStatus.DISABLED) {
+      throw new HttpStatusException(HttpStatus.FORBIDDEN, "The service is disabled.");
+    } else if (service.getStatus() == ServiceStatus.DOWN_FOR_MAINTENANCE) {
+
+      throw new HttpStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+          "The service is down for maintenance.");
+    }
+
+    if (!userRepo.isServiceAvailable(user.getId(), service.getId())) {
+      return new UserPermissionsResponse.Failure(
+          "The Tenant and/or Service is not available for this user");
+    }
+
+    return new UserPermissionsResponse.Success(getPermissionsFor(user, tenant));
   }
 
   @Post("/hasPermission")
@@ -86,20 +128,26 @@ public class AuthController {
     return null;
   }
 
-  private List<String> checkUserPermission(User user, Tenant tenant, List<String> permissions) {
-    List<TenantPermission> userPermissions = userRepo.getTenantPermissionsFor(user.getId()).stream()
-        .filter(tenantPermission ->
-            PermissionScope.SYSTEM.equals(tenantPermission.permissionScope()) ||
-            ((PermissionScope.TENANT.equals(tenantPermission.permissionScope()) || PermissionScope.SUBTENANT.equals(tenantPermission.permissionScope()))
-             && tenantPermission.tenantId == tenant.getId()))
-        .toList();
+    private final BiPredicate<TenantPermission, Tenant> isTenantOrSystemOrSubtenantScopeAndBelongsToTenant = (tp, t) ->
+        PermissionScope.SYSTEM.equals(tp.permissionScope()) || (
+            (PermissionScope.TENANT.equals(tp.permissionScope())
+                || PermissionScope.SUBTENANT.equals(tp.permissionScope()))
+                && tp.tenantId == t.getId());
 
-    List<String> commonPermissions = userPermissions.stream()
-        .map(TenantPermission::permissionName)
-        .filter(permissions::contains)
-        .toList();
+
+  private List<String> checkUserPermission(User user, Tenant tenant, List<String> permissions) {
+    List<String> commonPermissions = getPermissionsFor(user, tenant).stream()
+        .filter(permissions::contains).toList();
 
     return commonPermissions;
+  }
+
+  private List<String> getPermissionsFor(User user, Tenant tenant) {
+    return userRepo.getTenantPermissionsFor(user.getId()).stream()
+        .filter(tenantPermission ->
+            isTenantOrSystemOrSubtenantScopeAndBelongsToTenant.test(tenantPermission, tenant))
+        .map(TenantPermission::permissionName)
+        .toList();
   }
 
   private HttpResponse<HasPermissionResponse> createHasPermissionResponse(boolean hasPermission,
@@ -126,6 +174,20 @@ public class AuthController {
       PermissionScope permissionScope
 
   ) {
+
+  }
+
+
+  public sealed interface UserPermissionsResponse {
+    @Serdeable
+    record Success(List<String> permissions) implements UserPermissionsResponse {}
+    @Serdeable
+    record Failure(String errorMessage) implements  UserPermissionsResponse {}
+  }
+
+  @Serdeable
+  public record UserPermissionsRequest(@NotNull Long tenantId,
+                                       @NotNull Long serviceId) {
 
   }
 

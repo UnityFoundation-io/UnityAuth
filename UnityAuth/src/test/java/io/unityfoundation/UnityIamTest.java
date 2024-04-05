@@ -13,6 +13,8 @@ import io.micronaut.security.authentication.UsernamePasswordCredentials;
 import io.micronaut.security.token.render.BearerAccessRefreshToken;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.unityfoundation.auth.AuthController.HasPermissionResponse;
+import io.unityfoundation.auth.AuthController.UserPermissionsRequest;
+import io.unityfoundation.auth.AuthController.UserPermissionsResponse;
 import io.unityfoundation.auth.HasPermissionRequest;
 import jakarta.inject.Inject;
 
@@ -135,6 +137,31 @@ class UnityIamTest {
     assertEquals(Boolean.FALSE, response.getBody().get().hasPermission());
     assertEquals("The requested service is not enabled for the requested tenant!", response.getBody().get().errorMessage());
     assertNull(response.getBody().get().permissions());
+  }
+
+
+  @Test
+  void testGetUserPermissionsDisabled() {
+    String accessToken = login("disabled@test.io");
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/principal/permissions",
+            new UserPermissionsRequest(1L, 1L))
+        .bearerAuth(accessToken);
+    HttpResponse<UserPermissionsResponse.Failure> response = client.toBlocking()
+        .exchange(hasPermissionRequest, UserPermissionsResponse.Failure.class);
+    UserPermissionsResponse.Failure failure = response.getBody().orElseThrow();
+    assertEquals("The user's account has been disabled.", failure.errorMessage());
+  }
+
+  @Test
+  void testGetUserPermissionsHappyPath() {
+    String accessToken = login("person1@test.io");
+    HttpRequest<?> hasPermissionRequest = HttpRequest.POST("/api/principal/permissions",
+            new UserPermissionsRequest(1L, 1L))
+        .bearerAuth(accessToken);
+    HttpResponse<UserPermissionsResponse.Success> response = client.toBlocking()
+        .exchange(hasPermissionRequest, UserPermissionsResponse.Success.class);
+
+      assertEquals(response.getBody().get().permissions(), List.of("AUTH_SERVICE_EDIT-SYSTEM"));
   }
 
   private String login(String username) {
