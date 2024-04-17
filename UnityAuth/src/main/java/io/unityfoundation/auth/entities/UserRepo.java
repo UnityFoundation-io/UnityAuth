@@ -15,6 +15,15 @@ public interface UserRepo extends CrudRepository<User, Long> {
   Optional<User> findByEmail(String email);
 
   @Query("""
+    SELECT count(*) > 0
+    FROM user_role ur
+      inner join user u on u.id = ur.user_id
+    WHERE u.email = :email
+      and ur.tenant_id = :tenantId;
+""")
+  boolean existsByEmailAndTenantId(String email, Long tenantId);
+
+  @Query("""
       SELECT count(*) > 0
 FROM user_role ur
          inner join user u on u.id = ur.user_id
@@ -49,5 +58,30 @@ where ur.user_id = :userId
 """)
   List<TenantPermission> getTenantPermissionsFor(Long userId);
 
+  @Query("""
+    select u.*
+    from user_role ur inner join user u on u.id = ur.user_id
+    where ur.tenant_id = :tenantId""")
+  List<User> findAllByTenantId(Long tenantId);
 
+  @Query("""
+select count(*) > 0
+    from user_role ur
+    inner join user u on u.id = ur.user_id
+    inner join role r on r.id = ur.role_id
+    where u.email = :email and (r.name = 'Unity Administrator' or r.name = 'Tenant Administrator')
+""")
+  boolean existsByEmailAndRoleEqualsUnityAdminOrTenantAdmin(String email);
+
+  @Query("""
+select count(*) > 0
+    from user_role ur
+    inner join user u on u.id = ur.user_id
+    inner join role r on r.id = ur.role_id
+    where u.email = :email and r.name = 'Unity Administrator'
+""")
+  boolean existsByEmailAndRoleEqualsUnityAdmin(String email);
+
+  @Query("select role_id from user_role where user_id = :userId")
+  List<Long> getUserRolesByUserId(Long userId);
 }

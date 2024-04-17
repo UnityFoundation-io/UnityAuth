@@ -4,23 +4,15 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.annotation.Body;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.serde.annotation.Serdeable;
+import io.unityfoundation.auth.entities.*;
 import io.unityfoundation.auth.entities.Permission.PermissionScope;
-import io.unityfoundation.auth.entities.Service;
 import io.unityfoundation.auth.entities.Service.ServiceStatus;
-import io.unityfoundation.auth.entities.ServiceRepo;
-import io.unityfoundation.auth.entities.Tenant;
-import io.unityfoundation.auth.entities.Tenant.TenantStatus;
-import io.unityfoundation.auth.entities.TenantRepo;
-import io.unityfoundation.auth.entities.User;
-import io.unityfoundation.auth.entities.UserRepo;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
@@ -33,11 +25,13 @@ public class AuthController {
   private final UserRepo userRepo;
   private final ServiceRepo serviceRepo;
   private final TenantRepo tenantRepo;
+  private final RoleRepo roleRepo;
 
-  public AuthController(UserRepo userRepo, ServiceRepo serviceRepo, TenantRepo tenantRepo) {
+  public AuthController(UserRepo userRepo, ServiceRepo serviceRepo, TenantRepo tenantRepo, RoleRepo roleRepo) {
     this.userRepo = userRepo;
     this.serviceRepo = serviceRepo;
     this.tenantRepo = tenantRepo;
+      this.roleRepo = roleRepo;
   }
 
   @Post("/principal/permissions")
@@ -49,7 +43,7 @@ public class AuthController {
     }
     Tenant tenant = maybeTenant.get();
 
-    if (!tenant.getStatus().equals(TenantStatus.ENABLED)){
+    if (!tenant.getStatus().equals(Tenant.TenantStatus.ENABLED)){
       return new UserPermissionsResponse.Failure("The tenant is not enabled.");
     }
 
@@ -108,6 +102,40 @@ public class AuthController {
     }
 
     return createHasPermissionResponse(true, user.getEmail(), null, commonPermissions);
+  }
+
+  @Get("/roles")
+  public HttpResponse<?> getRoles() {
+    return HttpResponse.ok(roleRepo.findAll());
+  }
+
+  @Get("/tenants")
+  public HttpResponse<?> getTenants(Authentication authentication) {
+
+    String authenticatedUserEmail = authentication.getName();
+
+    if(userRepo.existsByEmailAndRoleEqualsUnityAdmin(authenticatedUserEmail)) {
+      return HttpResponse.ok(tenantRepo.findAll());
+    }
+
+    return HttpResponse.ok(tenantRepo.findAllByUserEmail(authenticatedUserEmail));
+  }
+
+  @Get("/tenants/{id}/users")
+  public HttpResponse<List<UserResponse>> getTenantUsers(@PathVariable Long id, Authentication authentication) {
+
+    // reject if the declared tenant does not exist
+    if (tenantRepo.existsById(id)) {
+      return HttpResponse.badRequest();
+    }
+
+    // todo: it would be nice to capture the roles and have them automatically mapped to UserResponse.roles
+    List<UserResponse> tenantUsers = userRepo.findAllByTenantId(id).stream().map(user ->
+            new UserResponse(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(),
+                    userRepo.getUserRolesByUserId(user.getId())
+                    )).toList();
+
+    return HttpResponse.ok(tenantUsers);
   }
 
   private boolean checkUserStatus(User user) {
