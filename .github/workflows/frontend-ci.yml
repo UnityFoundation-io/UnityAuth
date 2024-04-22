@@ -1,0 +1,36 @@
+name: UnityAuth Frontend CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  UnityAuth-Frontend-CI:
+    runs-on: ubuntu-latest
+    steps:
+      # setup node
+      - uses: actions/checkout@v3
+      - name: Use Node.js 18.18.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.18.0
+      # install dependencies
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: ./frontend
+      # run prettier
+      - name: Check formatting with Prettier
+        run: npx prettier . --check
+        working-directory: ./frontend
+        # run linter
+      - name: Lint project with Eslint
+        run: npx eslint .
+        working-directory: ./frontend
+      # run svelte check
+      - name: Run Svelte Check
+        run: npm run check
+        working-directory: ./frontend
+      # run unit tests
+      - name: Run unit tests
+        run: npm run test:unit
+        working-directory: ./frontend
