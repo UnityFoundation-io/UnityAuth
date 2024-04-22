@@ -69,9 +69,9 @@ select count(*) > 0
     from user_role ur
     inner join user u on u.id = ur.user_id
     inner join role r on r.id = ur.role_id
-    where u.email = :email and (r.name = 'Unity Administrator' or r.name = 'Tenant Administrator')
+    where u.email = :email and ur.tenant_id = :tenantId and r.name = 'Tenant Administrator'
 """)
-  boolean existsByEmailAndRoleEqualsUnityAdminOrTenantAdmin(String email);
+  boolean existsByEmailAndTenantEqualsAndIsTenantAdmin(String email, Long tenantId);
 
   @Query("""
 select count(*) > 0
@@ -84,4 +84,10 @@ select count(*) > 0
 
   @Query("select role_id from user_role where user_id = :userId")
   List<Long> getUserRolesByUserId(Long userId);
+
+  @Query("INSERT INTO user_role(user_id, tenant_id, role_id) VALUES (:userId, :tenantId, :roleId)")
+  void insertUserRole(Long userId, Long tenantId, Long roleId);
+
+  @Query("DELETE FROM user_role WHERE tenant_id = :tenantId and user_id = :userId")
+  void deleteRoleByTenantIdAndUserId(Long tenantId, Long userId);
 }
