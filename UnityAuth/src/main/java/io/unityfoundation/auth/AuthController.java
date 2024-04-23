@@ -49,7 +49,7 @@ public class AuthController {
 
     User user = userRepo.findByEmail(authentication.getName()).orElse(null);
     if (checkUserStatus(user)) {
-      return new UserPermissionsResponse.Failure("The users account has been disabled.");
+      return new UserPermissionsResponse.Failure("The user's account has been disabled.");
     }
 
     Service service = serviceRepo.findById(requestDTO.serviceId())
