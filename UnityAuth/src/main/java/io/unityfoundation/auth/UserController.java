@@ -3,6 +3,7 @@ package io.unityfoundation.auth;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
@@ -24,22 +25,24 @@ public class UserController {
     private final UserRepo userRepo;
     private final TenantRepo tenantRepo;
     private final RoleRepo roleRepo;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserController(UserRepo userRepo, TenantRepo tenantRepo, RoleRepo roleRepo) {
+    public UserController(UserRepo userRepo, TenantRepo tenantRepo, RoleRepo roleRepo, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
         this.tenantRepo = tenantRepo;
         this.roleRepo = roleRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Post
-    public HttpResponse<?> createUser(@Body AddUserRequest requestDTO,
+    public HttpResponse<UserResponse> createUser(@Body AddUserRequest requestDTO,
                                                  Authentication authentication) {
 
         Long requestTenantId = requestDTO.tenantId();
 
         // reject if the declared tenant does not exist
-        if (tenantRepo.existsById(requestTenantId)) {
-            return HttpResponse.notFound("Tenant does not exist");
+        if (!tenantRepo.existsById(requestTenantId)) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Tenant not found");
         }
 
         Role unityAdministrator = roleRepo.findByName("Unity Administrator");
@@ -62,7 +65,7 @@ public class UserController {
 
         // reject if new user already exists under a tenant
         if (userRepo.existsByEmailAndTenantId(requestDTO.email(), requestTenantId)) {
-            return HttpResponse.badRequest("User already exists under declared tenant.");
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "User already exists");
         }
 
         // if the new user exists, create a new user-role entry
@@ -72,9 +75,9 @@ public class UserController {
         if (userOptional.isEmpty()) {
             User newUser = new User();
             newUser.setEmail(requestDTO.email());
-            newUser.setPassword(requestDTO.password());
-            newUser.setFirstName(requestDTO.firstName);
-            newUser.setLastName(requestDTO.lastName);
+            newUser.setPassword(passwordEncoder.encode(requestDTO.password()));
+            newUser.setFirstName(requestDTO.firstName());
+            newUser.setLastName(requestDTO.lastName());
             newUser.setStatus(User.UserStatus.ENABLED);
             user = userRepo.save(newUser);
         } else {
@@ -91,18 +94,18 @@ public class UserController {
     }
 
     @Patch("{id}/roles")
-    public HttpResponse<?> updateUserRoles(@PathVariable Long id, @Body UpdateUserRolesRequest requestDTO,
+    public HttpResponse<UserResponse> updateUserRoles(@PathVariable Long id, @Body UpdateUserRolesRequest requestDTO,
                                                 Authentication authentication) {
         Long requestTenantId = requestDTO.tenantId();
 
         // reject if the declared tenant does not exist
-        if (tenantRepo.existsById(requestTenantId)) {
-            return HttpResponse.notFound("Tenant does not exist");
+        if (!tenantRepo.existsById(requestTenantId)) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Tenant not found");
         }
 
         Optional<User> userOptional = userRepo.findById(id);
         if (userOptional.isEmpty()) {
-            return HttpResponse.notFound("User not found.");
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
         User user = userOptional.get();
@@ -126,7 +129,6 @@ public class UserController {
 
         applyRolesPatch(rolesIntersection, requestTenantId, user.getId());
 
-        // return updated user
         return HttpResponse.created(new UserResponse(user.getId(),
                 user.getEmail(),
                 user.getFirstName(),
@@ -150,17 +152,17 @@ public class UserController {
     }
 
     @Patch("{id}")
-    public HttpResponse<?> selfPatch(@PathVariable Long id, @Body UpdateSelfRequest requestDTO,
+    public HttpResponse<UserResponse> selfPatch(@PathVariable Long id, @Body UpdateSelfRequest requestDTO,
                                                 Authentication authentication) {
 
         Optional<User> userOptional = userRepo.findByEmail(authentication.getName());
         if (userOptional.isEmpty()) {
-            return HttpResponse.notFound("User not found.");
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
         User user = userOptional.get();
         if (!Objects.equals(user.getId(), id)) {
-            return HttpResponse.badRequest("User id mismatch.");
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "User id mismatch.");
         }
 
         if (requestDTO.firstName != null) {
@@ -170,10 +172,10 @@ public class UserController {
             user.setLastName(requestDTO.lastName);
         }
         if (requestDTO.password != null) {
-            user.setPassword(requestDTO.password);
+            user.setPassword(passwordEncoder.encode(requestDTO.password()));
         }
 
-        User saved = userRepo.save(user);
+        User saved = userRepo.update(user);
         return HttpResponse.ok(new UserResponse(saved.getId(), saved.getEmail(), saved.getFirstName(), saved.getLastName(),
                 userRepo.getUserRolesByUserId(saved.getId())));
     }
@@ -196,8 +198,8 @@ public class UserController {
 
     @Serdeable
     public record UpdateSelfRequest(
-            @NotBlank String firstName,
-            @NotBlank String lastName,
-            @NotBlank String password) {
+            @NullOrNotBlank String firstName,
+            @NullOrNotBlank String lastName,
+            @NullOrNotBlank String password) {
     }
 }

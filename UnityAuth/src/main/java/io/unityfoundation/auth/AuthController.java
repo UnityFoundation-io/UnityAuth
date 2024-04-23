@@ -105,27 +105,30 @@ public class AuthController {
   }
 
   @Get("/roles")
-  public HttpResponse<?> getRoles() {
-    return HttpResponse.ok(roleRepo.findAll());
+  public HttpResponse<List<RoleDTO>> getRoles() {
+    return HttpResponse.ok(roleRepo.findAll().stream()
+            .map(role -> new RoleDTO(role.getId(), role.getName(), role.getDescription()))
+            .toList());
   }
 
   @Get("/tenants")
-  public HttpResponse<?> getTenants(Authentication authentication) {
+  public HttpResponse<List<TenantDTO>> getTenants(Authentication authentication) {
 
     String authenticatedUserEmail = authentication.getName();
 
-    if(userRepo.existsByEmailAndRoleEqualsUnityAdmin(authenticatedUserEmail)) {
-      return HttpResponse.ok(tenantRepo.findAll());
-    }
+    List<Tenant> tenants = userRepo.existsByEmailAndRoleEqualsUnityAdmin(authenticatedUserEmail) ?
+            tenantRepo.findAll() : tenantRepo.findAllByUserEmail(authenticatedUserEmail);
 
-    return HttpResponse.ok(tenantRepo.findAllByUserEmail(authenticatedUserEmail));
+    return HttpResponse.ok(tenants.stream()
+            .map(tenant -> new TenantDTO(tenant.getId(), tenant.getName()))
+            .toList());
   }
 
   @Get("/tenants/{id}/users")
   public HttpResponse<List<UserResponse>> getTenantUsers(@PathVariable Long id, Authentication authentication) {
 
     // reject if the declared tenant does not exist
-    if (tenantRepo.existsById(id)) {
+    if (!tenantRepo.existsById(id)) {
       return HttpResponse.badRequest();
     }
 
@@ -186,24 +189,32 @@ public class AuthController {
   }
 
   @Serdeable
+  public record TenantDTO(
+      Long id,
+      String name
+  ) {}
+
+  @Serdeable
+  public record RoleDTO(
+      Long id,
+      String name,
+      String description
+  ) {}
+
+  @Serdeable
   public record HasPermissionResponse(
       boolean hasPermission,
       @Nullable String userEmail,
       @Nullable String errorMessage,
       List<String> permissions
-  ) {
-
-  }
+  ) {}
 
   @Introspected
   public record TenantPermission(
       long tenantId,
       String permissionName,
       PermissionScope permissionScope
-
-  ) {
-
-  }
+  ) {}
 
 
   public sealed interface UserPermissionsResponse {
@@ -215,8 +226,6 @@ public class AuthController {
 
   @Serdeable
   public record UserPermissionsRequest(@NotNull Long tenantId,
-                                       @NotNull Long serviceId) {
-
-  }
+                                       @NotNull Long serviceId) {}
 
 }
