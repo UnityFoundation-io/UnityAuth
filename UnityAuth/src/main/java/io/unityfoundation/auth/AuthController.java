@@ -1,6 +1,5 @@
 package io.unityfoundation.auth;
 
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -11,12 +10,10 @@ import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.serde.annotation.Serdeable;
 import io.unityfoundation.auth.entities.*;
-import io.unityfoundation.auth.entities.Permission.PermissionScope;
 import io.unityfoundation.auth.entities.Service.ServiceStatus;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiPredicate;
 
 @Secured(SecurityRule.IS_AUTHENTICATED)
 @Controller("/api")
@@ -26,12 +23,14 @@ public class AuthController {
   private final ServiceRepo serviceRepo;
   private final TenantRepo tenantRepo;
   private final RoleRepo roleRepo;
+  private final PermissionsService permissionsService;
 
-  public AuthController(UserRepo userRepo, ServiceRepo serviceRepo, TenantRepo tenantRepo, RoleRepo roleRepo) {
+  public AuthController(UserRepo userRepo, ServiceRepo serviceRepo, TenantRepo tenantRepo, RoleRepo roleRepo, PermissionsService permissionsService) {
     this.userRepo = userRepo;
     this.serviceRepo = serviceRepo;
     this.tenantRepo = tenantRepo;
       this.roleRepo = roleRepo;
+      this.permissionsService = permissionsService;
   }
 
   @Post("/principal/permissions")
@@ -68,7 +67,7 @@ public class AuthController {
           "The Tenant and/or Service is not available for this user");
     }
 
-    return new UserPermissionsResponse.Success(getPermissionsFor(user, tenant));
+    return new UserPermissionsResponse.Success(permissionsService.getPermissionsFor(user, tenant));
   }
 
   @Post("/hasPermission")
@@ -96,7 +95,7 @@ public class AuthController {
       return createHasPermissionResponse(false, user.getEmail(), "The requested service is not enabled for the requested tenant!", List.of());
     }
 
-    List<String> commonPermissions = checkUserPermission(user, tenantOptional.get(), requestDTO.permissions());
+    List<String> commonPermissions = permissionsService.checkUserPermission(user, tenantOptional.get(), requestDTO.permissions());
     if (commonPermissions.isEmpty()) {
       return createHasPermissionResponse(false, user.getEmail(), "The user does not have permission!", commonPermissions);
     }
@@ -159,28 +158,6 @@ public class AuthController {
     return null;
   }
 
-    private final BiPredicate<TenantPermission, Tenant> isTenantOrSystemOrSubtenantScopeAndBelongsToTenant = (tp, t) ->
-        PermissionScope.SYSTEM.equals(tp.permissionScope()) || (
-            (PermissionScope.TENANT.equals(tp.permissionScope())
-                || PermissionScope.SUBTENANT.equals(tp.permissionScope()))
-                && tp.tenantId == t.getId());
-
-
-  private List<String> checkUserPermission(User user, Tenant tenant, List<String> permissions) {
-    List<String> commonPermissions = getPermissionsFor(user, tenant).stream()
-        .filter(permissions::contains).toList();
-
-    return commonPermissions;
-  }
-
-  private List<String> getPermissionsFor(User user, Tenant tenant) {
-    return userRepo.getTenantPermissionsFor(user.getId()).stream()
-        .filter(tenantPermission ->
-            isTenantOrSystemOrSubtenantScopeAndBelongsToTenant.test(tenantPermission, tenant))
-        .map(TenantPermission::permissionName)
-        .toList();
-  }
-
   private HttpResponse<HasPermissionResponse> createHasPermissionResponse(boolean hasPermission,
                                                                           String userEmail,
                                                                           String message,
@@ -208,14 +185,6 @@ public class AuthController {
       @Nullable String errorMessage,
       List<String> permissions
   ) {}
-
-  @Introspected
-  public record TenantPermission(
-      long tenantId,
-      String permissionName,
-      PermissionScope permissionScope
-  ) {}
-
 
   public sealed interface UserPermissionsResponse {
     @Serdeable

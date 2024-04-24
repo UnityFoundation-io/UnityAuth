@@ -5,9 +5,11 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
-import io.unityfoundation.auth.AuthController.TenantPermission;
+
 import java.util.List;
 import java.util.Optional;
+
+import static io.unityfoundation.auth.PermissionsService.*;
 
 @JdbcRepository(dialect = Dialect.MYSQL)
 public interface UserRepo extends CrudRepository<User, Long> {
