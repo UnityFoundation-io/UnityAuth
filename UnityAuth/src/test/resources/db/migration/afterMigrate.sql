@@ -18,12 +18,14 @@ INSERT INTO tenant_service (tenant_id, service_id, status) VALUES(2, 1, 'ENABLED
 INSERT INTO permission (id, name, description, scope) VALUES(1, 'AUTH_SERVICE_EDIT-SYSTEM', 'Description', 'SYSTEM');
 INSERT INTO permission (id, name, description, scope) VALUES(2, 'LIBRE311_REQUEST_EDIT-TENANT', 'Description', 'TENANT');
 INSERT INTO permission (id, name, description, scope) VALUES(3, 'LIBRE311_REQUEST_EDIT-SUBTENANT', 'Description', 'SUBTENANT');
+INSERT INTO permission (id, name, description, scope) VALUES(4, 'AUTH_SERVICE_VIEW-SYSTEM', 'Description', 'SYSTEM');
 INSERT INTO role (id, name, description) VALUES(1, 'Unity Administrator', 'System role');
 INSERT INTO role (id, name, description) VALUES(2, 'Tenant role', 'Tenant role');
 INSERT INTO role (id, name, description) VALUES(3, 'Subtenant role', 'Subtenant role');
 INSERT INTO role_permission (role_id, permission_id) VALUES(1, 1);
 INSERT INTO role_permission (role_id, permission_id) VALUES(2, 2);
 INSERT INTO role_permission (role_id, permission_id) VALUES(3, 3);
+INSERT INTO role_permission (role_id, permission_id) VALUES(1, 4);
 INSERT INTO user_role (tenant_id, user_id, role_id) VALUES(1, 1, 1);
 INSERT INTO user_role (tenant_id, user_id, role_id) VALUES(2, 1, 2);
 INSERT INTO user_role (tenant_id, user_id, role_id) VALUES(2, 1, 3);

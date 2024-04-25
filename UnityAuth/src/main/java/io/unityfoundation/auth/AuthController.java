@@ -104,7 +104,19 @@ public class AuthController {
   }
 
   @Get("/roles")
-  public HttpResponse<List<RoleDTO>> getRoles() {
+  public HttpResponse<List<RoleDTO>> getRoles(Authentication authentication) {
+
+    User user = userRepo.findByEmail(authentication.getName()).orElse(null);
+    if (checkUserStatus(user)) {
+      throw new HttpStatusException(HttpStatus.FORBIDDEN, "The user is disabled.");
+    }
+
+    List<String> commonPermissions = permissionsService.checkUserPermissionsAcrossAllTenants(
+            user, List.of("AUTH_SERVICE_VIEW-SYSTEM", "AUTH_SERVICE_VIEW-TENANT"));
+    if (commonPermissions.isEmpty()) {
+      throw new HttpStatusException(HttpStatus.FORBIDDEN, "The user does not have permission!");
+    }
+
     return HttpResponse.ok(roleRepo.findAll().stream()
             .map(role -> new RoleDTO(role.getId(), role.getName(), role.getDescription()))
             .toList());
@@ -114,6 +126,16 @@ public class AuthController {
   public HttpResponse<List<TenantDTO>> getTenants(Authentication authentication) {
 
     String authenticatedUserEmail = authentication.getName();
+    User user = userRepo.findByEmail(authenticatedUserEmail).orElse(null);
+    if (checkUserStatus(user)) {
+      throw new HttpStatusException(HttpStatus.FORBIDDEN, "The user is disabled.");
+    }
+
+    List<String> commonPermissions = permissionsService.checkUserPermissionsAcrossAllTenants(
+            user, List.of("AUTH_SERVICE_VIEW-SYSTEM", "AUTH_SERVICE_VIEW-TENANT"));
+    if (commonPermissions.isEmpty()) {
+      throw new HttpStatusException(HttpStatus.FORBIDDEN, "The user does not have permission!");
+    }
 
     List<Tenant> tenants = userRepo.existsByEmailAndRoleEqualsUnityAdmin(authenticatedUserEmail) ?
             tenantRepo.findAll() : tenantRepo.findAllByUserEmail(authenticatedUserEmail);
@@ -127,14 +149,26 @@ public class AuthController {
   public HttpResponse<List<UserResponse>> getTenantUsers(@PathVariable Long id, Authentication authentication) {
 
     // reject if the declared tenant does not exist
-    if (!tenantRepo.existsById(id)) {
-      return HttpResponse.badRequest();
+    Optional<Tenant> tenantOptional = tenantRepo.findById(id);
+    if (tenantOptional.isEmpty()) {
+      throw new HttpStatusException(HttpStatus.NOT_FOUND, "Tenant not found.");
+    }
+
+    User user = userRepo.findByEmail(authentication.getName()).orElse(null);
+    if (checkUserStatus(user)) {
+      throw new HttpStatusException(HttpStatus.FORBIDDEN, "The user is disabled.");
+    }
+
+    List<String> commonPermissions = permissionsService.checkUserPermission(user, tenantOptional.get(),
+            List.of("AUTH_SERVICE_VIEW-SYSTEM", "AUTH_SERVICE_VIEW-TENANT"));
+    if (commonPermissions.isEmpty()) {
+      throw new HttpStatusException(HttpStatus.FORBIDDEN, "The user does not have permission!");
     }
 
     // todo: it would be nice to capture the roles and have them automatically mapped to UserResponse.roles
-    List<UserResponse> tenantUsers = userRepo.findAllByTenantId(id).stream().map(user ->
-            new UserResponse(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(),
-                    userRepo.getUserRolesByUserId(user.getId())
+    List<UserResponse> tenantUsers = userRepo.findAllByTenantId(id).stream().map(tenantUser ->
+            new UserResponse(tenantUser.getId(), tenantUser.getEmail(), tenantUser.getFirstName(), tenantUser.getLastName(),
+                    userRepo.getUserRolesByUserId(tenantUser.getId())
                     )).toList();
 
     return HttpResponse.ok(tenantUsers);

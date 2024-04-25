@@ -9,6 +9,7 @@ import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 @Singleton
 public class PermissionsService {
@@ -20,6 +21,11 @@ public class PermissionsService {
                     (Permission.PermissionScope.TENANT.equals(tp.permissionScope())
                             || Permission.PermissionScope.SUBTENANT.equals(tp.permissionScope()))
                             && tp.tenantId == t.getId());
+
+    private final Predicate<TenantPermission> isTenantOrSystemOrSubtenantScope = (tp) ->
+            Permission.PermissionScope.SYSTEM.equals(tp.permissionScope()) || (
+                    (Permission.PermissionScope.TENANT.equals(tp.permissionScope())
+                            || Permission.PermissionScope.SUBTENANT.equals(tp.permissionScope())));
 
     public PermissionsService(UserRepo userRepo) {
         this.userRepo = userRepo;
@@ -35,6 +41,14 @@ public class PermissionsService {
                 .filter(tenantPermission ->
                         isTenantOrSystemOrSubtenantScopeAndBelongsToTenant.test(tenantPermission, tenant))
                 .map(TenantPermission::permissionName)
+                .toList();
+    }
+
+    public List<String> checkUserPermissionsAcrossAllTenants(User user, List<String> permissions) {
+        return userRepo.getTenantPermissionsFor(user.getId()).stream()
+                .filter(isTenantOrSystemOrSubtenantScope)
+                .map(TenantPermission::permissionName)
+                .filter(permissions::contains)
                 .toList();
     }
 

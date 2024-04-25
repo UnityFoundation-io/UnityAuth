@@ -167,7 +167,7 @@ class UnityIamTest {
     HttpResponse<UserPermissionsResponse.Success> response = client.toBlocking()
         .exchange(hasPermissionRequest, UserPermissionsResponse.Success.class);
 
-      assertEquals(response.getBody().get().permissions(), List.of("AUTH_SERVICE_EDIT-SYSTEM"));
+      assertTrue(response.getBody().get().permissions().contains("AUTH_SERVICE_EDIT-SYSTEM"));
   }
 
   @Test
@@ -237,6 +237,8 @@ class UnityIamTest {
     assertFalse(user.roles().isEmpty());
 
     // Case: User does exist in system but not under tenant.
+    // Given that tenant = 2, this confirms that a Unity Admin can perform actions in a Tenant
+    // they are not associated to. (See afterMigrate.sql user_role table)
     createUserRequest = HttpRequest.POST("/api/users",
                     new UserController.AddUserRequest(
                             "tmpuser@test.io",

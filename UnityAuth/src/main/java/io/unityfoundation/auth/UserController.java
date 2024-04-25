@@ -26,12 +26,14 @@ public class UserController {
     private final TenantRepo tenantRepo;
     private final RoleRepo roleRepo;
     private final PasswordEncoder passwordEncoder;
+    private final PermissionsService permissionsService;
 
-    public UserController(UserRepo userRepo, TenantRepo tenantRepo, RoleRepo roleRepo, PasswordEncoder passwordEncoder) {
+    public UserController(UserRepo userRepo, TenantRepo tenantRepo, RoleRepo roleRepo, PasswordEncoder passwordEncoder, PermissionsService permissionsService) {
         this.userRepo = userRepo;
         this.tenantRepo = tenantRepo;
         this.roleRepo = roleRepo;
         this.passwordEncoder = passwordEncoder;
+        this.permissionsService = permissionsService;
     }
 
     @Post
@@ -40,23 +42,31 @@ public class UserController {
 
         Long requestTenantId = requestDTO.tenantId();
 
-        // reject if the declared tenant does not exist
-        if (!tenantRepo.existsById(requestTenantId)) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Tenant not found");
+        Optional<Tenant> tenantOptional = tenantRepo.findById(requestTenantId);
+        if (tenantOptional.isEmpty()) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Tenant not found.");
         }
 
-        Role unityAdministrator = roleRepo.findByName("Unity Administrator");
+        Optional<User> adminOptional = userRepo.findByEmail(authentication.getName());
+        if (adminOptional.isEmpty()) {
+            throw new HttpStatusException(HttpStatus.FORBIDDEN, "The user is disabled.");
+        }
 
-        // ignore roles not defined by application
+        User admin = adminOptional.get();
+
+        List<String> commonPermissions = permissionsService.checkUserPermission(admin, tenantOptional.get(),
+                List.of("AUTH_SERVICE_EDIT-SYSTEM", "AUTH_SERVICE_EDIT-TENANT"));
+        if (commonPermissions.isEmpty()) {
+            throw new HttpStatusException(HttpStatus.FORBIDDEN, "The user does not have permission!");
+        }
+
+        // ignore roles not defined by system
         List<Long> rolesIntersection = getRolesIntersection(requestDTO.roles());
 
         // reject if caller is not a unity nor tenant admin of the declared tenant
-        String authUserEmail = authentication.getName();
-        if (!userRepo.existsByEmailAndRoleEqualsUnityAdmin(authUserEmail)) {
-            if (!userRepo.existsByEmailAndTenantEqualsAndIsTenantAdmin(authUserEmail, requestTenantId)) {
-                return HttpResponse.status(HttpStatus.FORBIDDEN,
-                        "Authenticated user is not authorized to make changes under declared tenant.");
-            } else if (rolesIntersection.stream().anyMatch(roleId -> roleId.equals(unityAdministrator.getId()))){
+        if (!commonPermissions.contains("AUTH_SERVICE_EDIT-SYSTEM")) {
+            Role unityAdministrator = roleRepo.findByName("Unity Administrator");
+            if (rolesIntersection.stream().anyMatch(roleId -> roleId.equals(unityAdministrator.getId()))){
                 // authenticated tenant admin user cannot grant unity admin role
                 return HttpResponse.status(HttpStatus.FORBIDDEN,
                         "Authenticated user is not authorized to grant Unity Admin");
@@ -97,30 +107,37 @@ public class UserController {
     public HttpResponse<UserResponse> updateUserRoles(@PathVariable Long id, @Body UpdateUserRolesRequest requestDTO,
                                                 Authentication authentication) {
         Long requestTenantId = requestDTO.tenantId();
-
-        // reject if the declared tenant does not exist
-        if (!tenantRepo.existsById(requestTenantId)) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Tenant not found");
+        Optional<Tenant> tenantOptional = tenantRepo.findById(requestTenantId);
+        if (tenantOptional.isEmpty()) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Tenant not found.");
         }
+
+        String authUserEmail = authentication.getName();
+        Optional<User> adminOptional = userRepo.findByEmail(authUserEmail);
+        if (adminOptional.isEmpty()) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Authenticated user does not exist");
+        }
+        User admin = adminOptional.get();
 
         Optional<User> userOptional = userRepo.findById(id);
         if (userOptional.isEmpty()) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
-
         User user = userOptional.get();
-        Role unityAdministrator = roleRepo.findByName("Unity Administrator");
 
         // ignore roles not defined by application
         List<Long> rolesIntersection = getRolesIntersection(requestDTO.roles());
 
         // if unity admin, proceed; otherwise, reject if roles exceed authenticated user's under same tenant.
-        String authUserEmail = authentication.getName();
-        if (!userRepo.existsByEmailAndRoleEqualsUnityAdmin(authUserEmail)) {
-            if (!userRepo.existsByEmailAndTenantEqualsAndIsTenantAdmin(authUserEmail, requestTenantId)) {
-                return HttpResponse.status(HttpStatus.FORBIDDEN,
-                        "Authenticated user is not authorized to make changes under declared tenant.");
-            } else if (rolesIntersection.stream().anyMatch(roleId -> roleId.equals(unityAdministrator.getId()))){
+        List<String> commonPermissions = permissionsService.checkUserPermission(admin, tenantOptional.get(),
+                List.of("AUTH_SERVICE_EDIT-SYSTEM", "AUTH_SERVICE_EDIT-TENANT"));
+        if (commonPermissions.isEmpty()) {
+            throw new HttpStatusException(HttpStatus.FORBIDDEN, "The user does not have permission!");
+        }
+
+        if (!commonPermissions.contains("AUTH_SERVICE_VIEW-SYSTEM")) {
+            Role unityAdministrator = roleRepo.findByName("Unity Administrator");
+            if (rolesIntersection.stream().anyMatch(roleId -> roleId.equals(unityAdministrator.getId()))){
                 // authenticated tenant admin user cannot grant unity admin role
                 return HttpResponse.status(HttpStatus.FORBIDDEN,
                         "Authenticated user is not authorized to grant Unity Admin");
