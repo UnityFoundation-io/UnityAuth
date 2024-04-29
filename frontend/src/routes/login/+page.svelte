@@ -29,7 +29,7 @@
 		if (emailInput.value && passwordInput.value) {
 			try {
 				await authService.login(emailInput.value, passwordInput.value);
-				goto('/portal');
+				goto('/tenant');
 			} catch (error: unknown) {
 				if (isAxiosError(error) && isHateoasErrorResponse(error.response?.data)) {
 					const hateoasError = error.response.data;
