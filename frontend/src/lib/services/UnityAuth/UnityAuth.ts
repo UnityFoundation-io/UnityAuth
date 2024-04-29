@@ -7,6 +7,7 @@ import {
 	UnityAuthServicePropsSchema
 } from './shared';
 import axios from 'axios';
+import { browser } from '$app/environment';
 
 export type UnityAuthEventMap = {
 	login: CompleteLoginResponse;
@@ -55,24 +56,23 @@ export class UnityAuthServiceImpl
 		this.loginData = completeLoginRes;
 
 		this.publish('login', completeLoginRes);
-		// sessionStorage.setItem(this.loginDataKey, JSON.stringify(completeLoginRes));
+		if (browser) sessionStorage.setItem(this.loginDataKey, JSON.stringify(completeLoginRes));
 		return completeLoginRes;
 	}
 
 	logout() {
-		// sessionStorage.removeItem(this.loginDataKey);
+		if (browser) sessionStorage.removeItem(this.loginDataKey);
 		this.publish('logout', undefined);
 	}
 
 	private retrieveLoginData(): CompleteLoginResponse | undefined {
-		// const loginInfo = sessionStorage.getItem(this.loginDataKey);
-		const loginInfo = null;
-
-		if (!loginInfo) {
-			return;
+		if (browser) {
+			const loginInfo = sessionStorage.getItem(this.loginDataKey);
+			if (!loginInfo) {
+				return;
+			}
+			return CompleteLoginResponseSchema.parse(JSON.parse(loginInfo));
 		}
-
-		return CompleteLoginResponseSchema.parse(JSON.parse(loginInfo));
 	}
 }
 
