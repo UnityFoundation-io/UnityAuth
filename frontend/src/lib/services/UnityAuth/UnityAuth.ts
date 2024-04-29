@@ -52,6 +52,8 @@ export class UnityAuthServiceImpl
 		const loginRes = UnityAuthLoginResponseSchema.parse(res.data);
 		const completeLoginRes: CompleteLoginResponse = { ...loginRes };
 
+		this.loginData = completeLoginRes;
+
 		this.publish('login', completeLoginRes);
 		// sessionStorage.setItem(this.loginDataKey, JSON.stringify(completeLoginRes));
 		return completeLoginRes;

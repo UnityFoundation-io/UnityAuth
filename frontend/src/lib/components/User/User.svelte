@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { Avatar, Dropdown } from 'stwui';
-	import { useUnityAuthContext } from '$lib/context/UnityAuthContext';
+	import { useUnityAuthContext, useUnityAuthService } from '$lib/context/UnityAuthContext';
 	import { goto } from '$app/navigation';
 
-	const unityAuthService = useUnityAuthContext().unityAuthService;
-	const user = undefined; // unityAuthService.user; 	//	TODO
+	const unityAuthContext = useUnityAuthContext();
+	const unityAuthService = useUnityAuthService();
+	const user = unityAuthContext.user;
 
 	let isUserDropdownVisible: boolean = false;
 
@@ -21,8 +22,7 @@
 
 <Dropdown bind:visible={isUserDropdownVisible}>
 	<button slot="trigger" on:click={toggleDropdown}>
-		<!-- <Avatar initials={$user?.username.charAt(0).toUpperCase()} /> -->
-		<Avatar initials={user} />
+		<Avatar initials={$user?.username.charAt(0).toUpperCase()} />
 	</button>
 	<Dropdown.Items slot="items">
 		<Dropdown.Items.Item on:click={logout} label="Logout"></Dropdown.Items.Item>
