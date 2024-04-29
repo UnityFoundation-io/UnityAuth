@@ -18,8 +18,6 @@
 			const mode: Mode = getModeFromEnv(import.meta.env);
 			const unityAuthBaseURL = String(import.meta.env.VITE_BACKEND_URL ?? '') || '/api';
 
-			console.log(unityAuthBaseURL);
-
 			const ctxProps: UnityAuthContextProviderProps = {
 				mode: mode,
 				unityAuthServiceProps: { baseURL: unityAuthBaseURL }
