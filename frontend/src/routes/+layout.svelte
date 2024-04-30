@@ -39,7 +39,7 @@
 	<UnityAuthContextProvider props={contextProviderProps.value}>
 		<header class="flex items-center justify-center">
 			<div class="flex gap-4">
-				<h1>{'Admin'}</h1>
+				<h1>{'Unity Auth'}</h1>
 			</div>
 
 			<User />
