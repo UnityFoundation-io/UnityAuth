@@ -8,6 +8,8 @@ import {
 } from './shared';
 import axios from 'axios';
 import { browser } from '$app/environment';
+import { isTenantsSuccessResponse } from '../TenantsResolver/shared';
+import type { TenantsResolver } from '../TenantsResolver/TenantsResolver';
 
 export type UnityAuthEventMap = {
 	login: CompleteLoginResponse;
@@ -26,6 +28,7 @@ export class UnityAuthServiceImpl
 {
 	private loginDataKey: string = 'loginData';
 	private axiosInstance: AxiosInstance;
+	private tenantsResolver: TenantsResolver;
 	private loginData: CompleteLoginResponse | undefined;
 	private constructor(props: UnityAuthServiceProps) {
 		super();
@@ -34,6 +37,8 @@ export class UnityAuthServiceImpl
 
 		this.loginData = this.retrieveLoginData();
 		this.publish('logout', undefined);
+
+		this.tenantsResolver = props.tenantsResolver;
 	}
 
 	public static create(props: UnityAuthServiceProps) {
@@ -51,6 +56,14 @@ export class UnityAuthServiceImpl
 		});
 
 		const loginRes = UnityAuthLoginResponseSchema.parse(res.data);
+
+		const tenantsRes = await this.tenantsResolver.getTenants(loginRes);
+
+		if (!isTenantsSuccessResponse(tenantsRes)) {
+			throw new Error(tenantsRes.errorMessage);
+		}
+		console.log(tenantsRes);
+
 		const completeLoginRes: CompleteLoginResponse = { ...loginRes };
 
 		this.loginData = completeLoginRes;

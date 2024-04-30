@@ -1,10 +1,13 @@
 import { z } from 'zod';
+import type { TenantsResolver } from '../TenantsResolver/TenantsResolver';
 
 export const UnityAuthServicePropsSchema = z.object({
 	baseURL: z.string()
 });
 
-export type UnityAuthServiceProps = z.infer<typeof UnityAuthServicePropsSchema>;
+export type UnityAuthServiceProps = z.infer<typeof UnityAuthServicePropsSchema> & {
+	tenantsResolver: TenantsResolver;
+};
 
 export const UnityAuthLoginResponseSchema = z.object({
 	access_token: z.string(),

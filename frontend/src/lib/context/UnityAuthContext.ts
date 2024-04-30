@@ -11,6 +11,7 @@ import {
 } from '$lib/services/ServerErrors/ServerErrors';
 import { isAxiosError } from 'axios';
 import type { CompleteLoginResponse, UnityAuthServiceProps } from '$lib/services/UnityAuth/shared';
+import { TenantsResolverImpl } from '$lib/services/TenantsResolver/TenantsResolver';
 
 const unityAuthCtxKey = Symbol();
 
@@ -24,12 +25,17 @@ export type UnityAuthContext = {
 } & UnityAuthAlert;
 
 export type UnityAuthContextProviderProps = {
-	unityAuthServiceProps: Omit<UnityAuthServiceProps, 'userPermissionsResolver'>;
+	unityAuthServiceProps: Omit<UnityAuthServiceProps, 'tenantsResolver'>;
 	mode: Mode;
 };
 
 export function createUnityAuthContext(props: UnityAuthContextProviderProps & UnityAuthAlert) {
+	const tenantsResolver = new TenantsResolverImpl({
+		libreBaseUrl: props.unityAuthServiceProps.baseURL
+	});
+
 	const unityAuthService = unityAuthServiceFactory({
+		tenantsResolver,
 		...props.unityAuthServiceProps
 	});
 
