@@ -1,6 +1,12 @@
 micronaut:
   application:
     name: unity-iam
+  server:
+    cors:
+      enabled: true
+      configurations:
+        web:
+          allowed-origins-regex: '^http:\/\/(.*?)localhost:3000$'
   security:
     authentication: bearer
     enabled: true
