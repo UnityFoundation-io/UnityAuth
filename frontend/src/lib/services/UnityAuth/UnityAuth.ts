@@ -50,8 +50,6 @@ export class UnityAuthServiceImpl
 	}
 
 	async login(email: string, password: string): Promise<CompleteLoginResponse> {
-		let completeLoginRes: CompleteLoginResponse;
-
 		const res = await this.axiosInstance.post('/api/login', {
 			username: email,
 			password: password
@@ -59,7 +57,7 @@ export class UnityAuthServiceImpl
 
 		const loginRes = UnityAuthLoginResponseSchema.parse(res.data);
 
-		completeLoginRes = { ...loginRes };
+		const completeLoginRes: CompleteLoginResponse = { ...loginRes };
 
 		try {
 			const tenantsRes = await this.tenantsResolver.getTenants(loginRes);
