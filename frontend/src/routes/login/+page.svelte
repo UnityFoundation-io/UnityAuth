@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { createInput, emailValidator } from '$lib/utils/validation';
-	import { useUnityAuthService } from '$lib/context/UnityAuthContext';
+	import { useUnityAuthContext, useUnityAuthService } from '$lib/context/UnityAuthContext';
 	import { goto } from '$app/navigation';
 	import { checkHasMessage, isHateoasErrorResponse } from '$lib/services/ServerErrors/ServerErrors';
 	import { isAxiosError } from 'axios';
 	import Login from '$lib/components/Login/Login.svelte';
 	import type { EventDispatchTypeMap } from '$lib/components/Login/login';
 
+	const unityAuthContext = useUnityAuthContext();
 	const authService = useUnityAuthService();
+	const user = unityAuthContext.user;
 
 	let emailInput = createInput('');
 	let passwordInput = createInput('');
@@ -29,7 +31,9 @@
 		if (emailInput.value && passwordInput.value) {
 			try {
 				await authService.login(emailInput.value, passwordInput.value);
-				goto('/tenant');
+
+				if ($user?.tenants) goto('/tenant');
+				else goto('/settings');
 			} catch (error: unknown) {
 				if (isAxiosError(error) && isHateoasErrorResponse(error.response?.data)) {
 					const hateoasError = error.response.data;

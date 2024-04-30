@@ -5,7 +5,7 @@ export const TenantsSchema = z.object({
 	name: z.string()
 });
 
-export type LibrePermissions = z.infer<typeof TenantsSchema>;
+export type Tenants = z.infer<typeof TenantsSchema>;
 
 export const TenantsSuccessResponseSchema = z.array(TenantsSchema);
 
