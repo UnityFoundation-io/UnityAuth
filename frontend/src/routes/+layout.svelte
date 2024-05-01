@@ -11,6 +11,7 @@
 	import { getModeFromEnv, type Mode } from '$lib/services/mode/mode';
 	import User from '$lib/components/User/User.svelte';
 	import SomethingWentWrong from '$lib/components/SomethingWentWrong/SomethingWentWrong.svelte';
+	import SplashLoading from '$lib/components/SplashLoading/SplashLoading.svelte';
 
 	let contextProviderProps: AsyncResult<UnityAuthContextProviderProps> = ASYNC_IN_PROGRESS;
 
@@ -50,7 +51,7 @@
 		</main>
 	</UnityAuthContextProvider>
 {:else if contextProviderProps.type == 'inProgress'}
-	<!-- <SplashLoading /> -->
+	<SplashLoading />
 {:else}
 	<SomethingWentWrong />
 {/if}
