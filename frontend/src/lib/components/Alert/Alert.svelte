@@ -1,21 +1,21 @@
 <script lang="ts">
 	import { Alert, Button } from 'stwui';
-	// import { informationCircle } from './Svg/solid/informationCircle';
-	// import { exclamationTriangle } from './Svg/solid/exclamationTriangle';
-	// import { exclamationCircle } from './Svg/solid/exclamationCircle';
+	import { informationCircle } from '$lib/components/Svg/solid/informationCircle';
+	import { exclamationTriangle } from '$lib/components/Svg/solid/exclamationTriangle';
+	import { exclamationCircle } from '$lib/components/Svg/solid/exclamationCircle';
+	import { checkCircle } from '$lib/components/Svg/solid/checkCircle';
 	import { ALERT_ANIMATION_DURATION, type AlertType } from '$lib/context/UnityAuthAlertStore';
 	import { createEventDispatcher } from 'svelte';
 	import { fly } from 'svelte/transition';
-	// import { checkCircle } from './Svg/solid/checkCircle';
 
 	const dispatch = createEventDispatcher<{ close: void }>();
 
-	// const typeIconMap = {
-	// 	error: exclamationCircle,
-	// 	info: informationCircle,
-	// 	warn: exclamationTriangle,
-	// 	success: checkCircle
-	// };
+	const typeIconMap = {
+		error: exclamationCircle,
+		info: informationCircle,
+		warn: exclamationTriangle,
+		success: checkCircle
+	};
 
 	export let type: AlertType;
 	export let title: string;
@@ -27,8 +27,7 @@
 	out:fly|global={{ x: 200, duration: ALERT_ANIMATION_DURATION }}
 >
 	<Alert {type} on:fade>
-		<!-- <Alert.Leading slot="leading" data={typeIconMap[type]} /> -->
-		<Alert.Leading slot="leading" />
+		<Alert.Leading slot="leading" data={typeIconMap[type]} />
 		<Alert.Title slot="title">{title}</Alert.Title>
 
 		<Alert.Description slot="description">
