@@ -12,14 +12,20 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.security.authentication.UsernamePasswordCredentials;
 import io.micronaut.security.token.render.BearerAccessRefreshToken;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.unityfoundation.auth.AuthController;
 import io.unityfoundation.auth.AuthController.HasPermissionResponse;
 import io.unityfoundation.auth.AuthController.UserPermissionsRequest;
 import io.unityfoundation.auth.AuthController.UserPermissionsResponse;
 import io.unityfoundation.auth.HasPermissionRequest;
+import io.unityfoundation.auth.UserController;
+import io.unityfoundation.auth.UserResponse;
 import jakarta.inject.Inject;
 
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -161,7 +167,139 @@ class UnityIamTest {
     HttpResponse<UserPermissionsResponse.Success> response = client.toBlocking()
         .exchange(hasPermissionRequest, UserPermissionsResponse.Success.class);
 
-      assertEquals(response.getBody().get().permissions(), List.of("AUTH_SERVICE_EDIT-SYSTEM"));
+      assertTrue(response.getBody().get().permissions().contains("AUTH_SERVICE_EDIT-SYSTEM"));
+  }
+
+  @Test
+  void testGetTenantsList() {
+    String accessToken = login("person1@test.io");
+    HttpRequest<?> getTenantsRequest = HttpRequest.GET("/api/tenants")
+            .bearerAuth(accessToken);
+    HttpResponse<AuthController.TenantDTO[]> response = client.toBlocking()
+            .exchange(getTenantsRequest, AuthController.TenantDTO[].class);
+
+    assertTrue(response.getBody(AuthController.TenantDTO[].class).isPresent());
+    assertFalse(Arrays.stream(response.getBody(AuthController.TenantDTO[].class).get()).findAny().isEmpty());
+  }
+
+  @Test
+  void testGetTenantsUsers() {
+    String accessToken = login("person1@test.io");
+    HttpRequest<?> getTenantUsersRequest = HttpRequest.GET("/api/tenants/2/users")
+            .bearerAuth(accessToken);
+    HttpResponse<UserResponse[]> response = client.toBlocking()
+            .exchange(getTenantUsersRequest, UserResponse[].class);
+
+
+    assertTrue(response.getBody().isPresent());
+
+    UserResponse[] userResponses = response.getBody().get();
+    assertFalse(Arrays.stream(userResponses).findAny().isEmpty());
+
+    Optional<UserResponse> first = Arrays.stream(userResponses).filter(userResponse -> userResponse.id().equals(4L)).findFirst();
+    assertTrue(first.isPresent());
+    assertEquals("acme-tenant-admin@test.io", first.get().email());
+  }
+
+  @Test
+  void testGetRoles() {
+    String accessToken = login("person1@test.io");
+    HttpRequest<?> getRolesRequest = HttpRequest.GET("/api/roles")
+            .bearerAuth(accessToken);
+    HttpResponse<AuthController.RoleDTO[]> response = client.toBlocking()
+            .exchange(getRolesRequest, AuthController.RoleDTO[].class);
+
+    assertTrue(response.getBody().isPresent());
+    assertFalse(Arrays.stream(response.getBody().get()).findAny().isEmpty());
+  }
+
+  @Test
+  void testCreateUsers() {
+    String accessToken = login("person1@test.io");
+
+    //Case: User does not exist in system.
+    HttpRequest<?> createUserRequest = HttpRequest.POST("/api/users",
+                    new UserController.AddUserRequest(
+                            "tmpuser@test.io",
+                            "Donald",
+                            "Duck",
+                            1L,
+                            "test",
+                            List.of(1L, 2L)
+                    ))
+            .bearerAuth(accessToken);
+
+    HttpResponse<UserResponse> response = client.toBlocking()
+            .exchange(createUserRequest, UserResponse.class);
+
+    assertTrue(response.getBody(UserResponse.class).isPresent());
+    UserResponse user = response.getBody(UserResponse.class).get();
+    assertFalse(user.roles().isEmpty());
+
+    // Case: User does exist in system but not under tenant.
+    // Given that tenant = 2, this confirms that a Unity Admin can perform actions in a Tenant
+    // they are not associated to. (See afterMigrate.sql user_role table)
+    createUserRequest = HttpRequest.POST("/api/users",
+                    new UserController.AddUserRequest(
+                            "tmpuser@test.io",
+                            "Donald",
+                            "Duck",
+                            2L,
+                            "test",
+                            List.of(2L)
+                    ))
+            .bearerAuth(accessToken);
+
+    response = client.toBlocking()
+            .exchange(createUserRequest, UserResponse.class);
+
+    assertTrue(response.getBody(UserResponse.class).isPresent());
+    user = response.getBody(UserResponse.class).get();
+    assertFalse(user.roles().isEmpty());
+    assertEquals(1, user.roles().size());
+  }
+
+  @Test
+  void testUpdateUserRoles() {
+    String accessToken = login("person1@test.io");
+
+    HttpRequest<?> updateRequest = HttpRequest.PATCH("/api/users/4/roles",
+                    new UserController.UpdateUserRolesRequest(
+                            2L,
+                            List.of(3L)
+                    ))
+            .bearerAuth(accessToken);
+
+    HttpResponse<UserResponse> response = client.toBlocking()
+            .exchange(updateRequest, UserResponse.class);
+
+    assertTrue(response.getBody(UserResponse.class).isPresent());
+    UserResponse user = response.getBody(UserResponse.class).get();
+    assertFalse(user.roles().isEmpty());
+    assertEquals(1, user.roles().size());
+    assertEquals(3L, user.roles().get(0));
+  }
+
+  @Test
+  void testUpdateSelfDetails() {
+    String accessToken = login("person1@test.io");
+
+    HttpRequest<?> updateRequest = HttpRequest.PATCH("/api/users/1",
+                    new UserController.UpdateSelfRequest(
+                            "Maui",
+                            "Mallard",
+                            null
+                    ))
+            .bearerAuth(accessToken);
+
+    HttpResponse<UserResponse> response = client.toBlocking()
+            .exchange(updateRequest, UserResponse.class);
+
+    assertTrue(response.getBody(UserResponse.class).isPresent());
+    UserResponse user = response.getBody(UserResponse.class).get();
+    assertFalse(user.roles().isEmpty());
+    assertEquals("Maui", user.firstName());
+    assertEquals("Mallard", user.lastName());
   }
 
   private String login(String username) {
