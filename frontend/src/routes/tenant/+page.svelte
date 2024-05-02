@@ -4,8 +4,12 @@
 
 	const unityAuthContext = useUnityAuthContext();
 	const user = unityAuthContext.user;
+
+	function selectTenant(e: CustomEvent) {
+		console.log(e.detail);
+	}
 </script>
 
 {#if $user && $user.tenants}
-	<Tenants tenants={$user.tenants} />
+	<Tenants tenants={$user.tenants} on:selectTenant={selectTenant} />
 {/if}

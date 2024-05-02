@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { Button, List } from 'stwui';
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
 
 	export let tenants;
 </script>
@@ -9,7 +12,10 @@
 		<List divided={false}>
 			{#each tenants as tenant}
 				<List.Item class="m-2 rounded-md py-0">
-					<Button class="flex w-full justify-start" on:click={() => alert('TODO')}>
+					<Button
+						class="flex w-full justify-start"
+						on:click={() => dispatch('selectTenant', tenant)}
+					>
 						{tenant.name}
 					</Button>
 				</List.Item>
