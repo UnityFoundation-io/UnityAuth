@@ -10,7 +10,7 @@ export class TenantsResolverImpl implements TenantsResolver {
 	constructor(private props: { libreBaseUrl: string }) {}
 
 	async getTenants(loginRes: UnityAuthLoginResponse): Promise<TenantsResponse> {
-		const res = await axios.get<unknown>(this.props.libreBaseUrl + `/api/tenants`, {
+		const res = await axios.get<unknown>(this.props.libreBaseUrl + `/tenants`, {
 			headers: {
 				Authorization: `Bearer ${loginRes.access_token}`
 			}
