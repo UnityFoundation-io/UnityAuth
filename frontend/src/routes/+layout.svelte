@@ -12,13 +12,14 @@
 	import User from '$lib/components/User/User.svelte';
 	import SomethingWentWrong from '$lib/components/SomethingWentWrong/SomethingWentWrong.svelte';
 	import SplashLoading from '$lib/components/SplashLoading/SplashLoading.svelte';
+	import { page } from '$app/stores';
 
 	let contextProviderProps: AsyncResult<UnityAuthContextProviderProps> = ASYNC_IN_PROGRESS;
 
 	async function initLibre311ContextProps() {
 		try {
 			const mode: Mode = getModeFromEnv(import.meta.env);
-			const unityAuthBaseURL = String(import.meta.env.VITE_BACKEND_URL ?? '') || '/api';
+			const unityAuthBaseURL = String(import.meta.env.VITE_BACKEND_URL ?? '') || $page.url.origin;
 
 			const ctxProps: UnityAuthContextProviderProps = {
 				mode: mode,
