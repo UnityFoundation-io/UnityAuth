@@ -5,8 +5,11 @@
 	const unityAuthContext = useUnityAuthContext();
 	const user = unityAuthContext.user;
 
+	let selectedTenant;
+
 	function selectTenant(e: CustomEvent) {
-		console.log(e.detail);
+		selectedTenant = e.detail;
+		console.log('Event recieved:', e.detail);
 	}
 </script>
 
