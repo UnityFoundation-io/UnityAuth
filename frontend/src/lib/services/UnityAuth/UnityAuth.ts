@@ -3,6 +3,7 @@ import { BaseObservable } from '../EventBus/EventBus';
 import type {
 	CompleteLoginResponse,
 	GetTenantUsersResponse,
+	UnityAuthLoginResponse,
 	UnityAuthServiceProps
 } from './shared';
 import {
@@ -26,12 +27,14 @@ export type UnityAuthService = BaseObservable<UnityAuthEventMap> & {
 	getLoginData(): CompleteLoginResponse | undefined;
 	logout(): void;
 	getTenantUsers(id: number): Promise<GetTenantUsersResponse>;
+	setAuthInfo(authInfo: UnityAuthLoginResponse | undefined): void;
 };
 
 export class UnityAuthServiceImpl
 	extends BaseObservable<UnityAuthEventMap>
 	implements UnityAuthService
 {
+	private authTokenInterceptorId: number = -1;
 	private loginDataKey: string = 'loginData';
 	private axiosInstance: AxiosInstance;
 	private tenantsResolver: TenantsResolver;
@@ -99,8 +102,20 @@ export class UnityAuthServiceImpl
 	}
 
 	async getTenantUsers(id: number): Promise<GetTenantUsersResponse> {
-		const res = await this.axiosInstance.post(`/api/tenants/${id}/users`);
-		return GetTenantUsersResponseSchema.parse(res);
+		const res = await this.axiosInstance.get(`/api/tenants/${id}/users`);
+		console.log(res.data);
+		return GetTenantUsersResponseSchema.parse(res.data);
+	}
+
+	setAuthInfo(authInfo: UnityAuthLoginResponse | undefined): void {
+		if (authInfo) {
+			this.authTokenInterceptorId = this.axiosInstance.interceptors.request.use(function (config) {
+				config.headers['Authorization'] = `Bearer ${authInfo.access_token}`;
+				return config;
+			});
+		} else {
+			this.axiosInstance.interceptors.request.eject(this.authTokenInterceptorId);
+		}
 	}
 }
 

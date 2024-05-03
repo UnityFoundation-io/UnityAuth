@@ -10,7 +10,6 @@ import {
 } from '$lib/services/http/http';
 import { getContext, setContext } from 'svelte';
 import type { GetTenantUsersResponse } from '$lib/services/UnityAuth/shared';
-import { page } from '$app/stores';
 import type { Page } from '@sveltejs/kit';
 
 const key = Symbol();
@@ -27,9 +26,9 @@ export function createTenantUsersContext(
 	const selectedTenantUser = writable<Maybe<TenantUser>>();
 	const tenantUsersResponse = writable<AsyncResult<GetTenantUsersResponse>>(ASYNC_IN_PROGRESS);
 
-	async function handleTenantPage() {
+	async function handleTenantPage(page: Page<Record<string, string>, string | null>) {
 		try {
-			const id = 1; // TODO
+			const id = Number(page.params.tenant_id);
 			const res = await unityAythService.getTenantUsers(id);
 
 			tenantUsersResponse.set(asAsyncSuccess(res));
@@ -40,7 +39,7 @@ export function createTenantUsersContext(
 
 	page.subscribe(async (page: Page<Record<string, string>, string | null>) => {
 		if (page.route.id?.includes('tenants')) {
-			await handleTenantPage();
+			await handleTenantPage(page);
 		}
 	});
 
