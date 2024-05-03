@@ -2,14 +2,15 @@
 	import { onMount } from 'svelte';
 	import { useUnityAuthService } from '$lib/context/UnityAuthContext';
 	import { page } from '$app/stores';
-	import type { TenantUser } from '$lib/context/TenantUsersContext/TenantUsers';
+	import { type TenantUser } from '$lib/context/TenantUsersContext/TenantUsers';
+	import TenantUsersList from '$lib/components/TenantUsersList/TenantUsersList.svelte';
 
 	const unityAuthService = useUnityAuthService();
 
-	let users: TenantUser;
+	let tenantUsers: TenantUser[];
 
 	async function getTenantUserList() {
-		users = await unityAuthService.getTenantUsers($page.params.tenant_id);
+		tenantUsers = await unityAuthService.getTenantUsers($page.params.tenant_id);
 	}
 
 	onMount(async () => {
@@ -17,13 +18,11 @@
 	});
 </script>
 
-<section class="h-full">
-	{#if users}
-		<ul>
-			{#each users as user}
-				<li>{user.email}</li>
-			{/each}
-		</ul>
+<section class="h-full w-full">
+	{#if tenantUsers}
+		<div class="flex h-full items-center justify-center">
+			<TenantUsersList {tenantUsers} />
+		</div>
 	{/if}
 </section>
 

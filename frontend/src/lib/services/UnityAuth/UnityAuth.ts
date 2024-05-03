@@ -103,7 +103,6 @@ export class UnityAuthServiceImpl
 
 	async getTenantUsers(id: number): Promise<GetTenantUsersResponse> {
 		const res = await this.axiosInstance.get(`/api/tenants/${id}/users`);
-		console.log(res.data);
 		return GetTenantUsersResponseSchema.parse(res.data);
 	}
 
