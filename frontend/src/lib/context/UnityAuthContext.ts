@@ -39,9 +39,12 @@ export function createUnityAuthContext(props: UnityAuthContextProviderProps & Un
 		...props.unityAuthServiceProps
 	});
 
+	unityAuthService.setAuthInfo(unityAuthService.getLoginData());
 	const user: Writable<UserInfo> = writable(unityAuthService.getLoginData());
 	unityAuthService.subscribe('login', (args) => user.set(args));
 	unityAuthService.subscribe('logout', () => user.set(undefined));
+	unityAuthService.subscribe('login', (args) => unityAuthService.setAuthInfo(args));
+	unityAuthService.subscribe('logout', () => unityAuthService.setAuthInfo(undefined));
 
 	function alertError(unknown: unknown) {
 		console.error(unknown);
