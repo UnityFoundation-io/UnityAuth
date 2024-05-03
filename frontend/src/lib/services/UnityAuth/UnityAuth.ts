@@ -1,8 +1,13 @@
 import type { AxiosInstance } from 'axios';
 import { BaseObservable } from '../EventBus/EventBus';
-import type { CompleteLoginResponse, UnityAuthServiceProps } from './shared';
+import type {
+	CompleteLoginResponse,
+	GetTenantUsersResponse,
+	UnityAuthServiceProps
+} from './shared';
 import {
 	CompleteLoginResponseSchema,
+	GetTenantUsersResponseSchema,
 	UnityAuthLoginResponseSchema,
 	UnityAuthServicePropsSchema
 } from './shared';
@@ -20,6 +25,7 @@ export type UnityAuthService = BaseObservable<UnityAuthEventMap> & {
 	login(email: string, password: string): Promise<CompleteLoginResponse>;
 	getLoginData(): CompleteLoginResponse | undefined;
 	logout(): void;
+	getTenantUsers(id: number): Promise<GetTenantUsersResponse>;
 };
 
 export class UnityAuthServiceImpl
@@ -90,6 +96,11 @@ export class UnityAuthServiceImpl
 			}
 			return CompleteLoginResponseSchema.parse(JSON.parse(loginInfo));
 		}
+	}
+
+	async getTenantUsers(id: number): Promise<GetTenantUsersResponse> {
+		const res = await this.axiosInstance.post(`/api/tenants/${id}/users`);
+		return GetTenantUsersResponseSchema.parse(res);
 	}
 }
 

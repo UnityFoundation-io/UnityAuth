@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { TenantsResolver } from '../TenantsResolver/TenantsResolver';
 import { TenantSchema } from '../TenantsResolver/shared';
+import { TenantUserSchema } from '$lib/context/TenantUsersContext/TenantUsers';
 
 export const UnityAuthServicePropsSchema = z.object({
 	baseURL: z.string()
@@ -23,3 +24,10 @@ export type UnityAuthLoginResponse = z.infer<typeof UnityAuthLoginResponseSchema
 export const CompleteLoginResponseSchema = UnityAuthLoginResponseSchema;
 
 export type CompleteLoginResponse = z.infer<typeof CompleteLoginResponseSchema>;
+
+export const GetTenantUsersResponseSchema = z.array(TenantUserSchema);
+export type GetTenantUsersResponse = z.infer<typeof GetTenantUsersResponseSchema>;
+
+export type TenantUsersResponse = {
+	tenantUsers: GetTenantUsersResponse;
+};
