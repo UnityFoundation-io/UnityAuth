@@ -10,7 +10,7 @@
 	let tenantUsers: TenantUser[];
 
 	async function getTenantUserList() {
-		tenantUsers = await unityAuthService.getTenantUsers($page.params.tenant_id);
+		tenantUsers = await unityAuthService.getTenantUsers(Number($page.params.tenant_id));
 	}
 
 	onMount(async () => {
