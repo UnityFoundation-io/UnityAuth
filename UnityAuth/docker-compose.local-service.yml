@@ -1,0 +1,34 @@
+# You must start docker-compose.local-infra.yml prior to starting this
+services:
+  unity-auth-db:
+    container_name: unity-auth-db
+    networks:
+      - unity-network
+    extends:
+      file: UnityAuth/docker-compose.local-infra.yml
+      service: unity-auth-db
+
+  unity-auth-api:
+    container_name: unity-auth-api
+    build:
+      dockerfile: DockerfileLocal
+      context: .
+    depends_on:
+      unity-auth-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - unity-network
+    environment:
+      MICRONAUT_ENVIRONMENTS: local
+      MICRONAUT_SERVER_PORT: 8081
+      DATASOURCES_DEFAULT_URL: "jdbc:mysql://unity-auth-db:3306/test?allowPublicKeyRetrieval=true&useSSL=false"
+    ports:
+      - "8081:8081"
+
+networks:
+  default:
+    name: unity-network
+    external: true
+  unity-network:
+    external: true

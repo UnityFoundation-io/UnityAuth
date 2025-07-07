@@ -1,0 +1,41 @@
+# You must start docker-compose.local.yml prior to starting this
+services:
+  ## Infrastructure Extensions
+  unity-auth-db:
+    container_name: unity-auth-db
+    networks:
+      - unity-network
+    extends:
+      file: UnityAuth/docker-compose.local-infra.yml
+      service: unity-auth-db
+
+  ## Service Extensions
+  unity-auth-api:
+    container_name: unity-auth-api
+    networks:
+      - unity-network
+    extends:
+      file: UnityAuth/docker-compose.local-service.yml
+      service: unity-auth-api
+    depends_on:
+      unity-auth-db:
+        condition: service_healthy
+
+  ## UI Service Extensions
+  unity-auth-ui:
+    container_name: unity-auth-ui
+    build:
+      dockerfile: FrontendDockerfile
+      context: .
+    restart: unless-stopped
+    environment:
+      VITE_BACKEND_URL: http://localhost:8081
+    ports:
+      - "3001:80"
+
+networks:
+  default:
+    name: unity-network
+    external: true
+  unity-network:
+    external: true

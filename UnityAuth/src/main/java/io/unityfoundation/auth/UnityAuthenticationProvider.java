@@ -2,13 +2,13 @@ package io.unityfoundation.auth;
 
 import static io.micronaut.security.authentication.AuthenticationFailureReason.CREDENTIALS_DO_NOT_MATCH;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.security.authentication.AuthenticationException;
 import io.micronaut.security.authentication.AuthenticationFailed;
-import io.micronaut.security.authentication.AuthenticationProvider;
 import io.micronaut.security.authentication.AuthenticationRequest;
 import io.micronaut.security.authentication.AuthenticationResponse;
+import io.micronaut.security.authentication.provider.ReactiveAuthenticationProvider;
 import io.unityfoundation.auth.entities.User;
 import io.unityfoundation.auth.entities.UserRepo;
 import jakarta.inject.Singleton;
@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @Singleton
-public class UnityAuthenticationProvider implements AuthenticationProvider<HttpRequest<?>> {
+public class UnityAuthenticationProvider implements ReactiveAuthenticationProvider<HttpRequest<?>,Object,Object> {
 
   private final UserRepo userRepo;
   private final PasswordEncoder passwordEncoder;
@@ -31,34 +31,6 @@ public class UnityAuthenticationProvider implements AuthenticationProvider<HttpR
     this.passwordEncoder = passwordEncoder;
   }
 
-  /**
-   * Authenticates the user with the given authentication request.
-   *
-   * @param httpRequest The HTTP request associated with the authentication.
-   * @param authenticationRequest The authentication request containing user credentials.
-   * @return A Publisher emitting an AuthenticationResponse upon successful authentication, or throwing
-   *         an AuthenticationException if authentication fails.
-   */
-  @Override
-  public Publisher<AuthenticationResponse> authenticate(@Nullable HttpRequest<?> httpRequest,
-      AuthenticationRequest<?, ?> authenticationRequest) {
-    return Mono.fromCallable(() -> findUser(authenticationRequest))
-        .subscribeOn(Schedulers.boundedElastic())
-        .flatMap(user -> {
-          AuthenticationFailed authenticationFailed = validate(user, authenticationRequest);
-          if (authenticationFailed != null) {
-            return Mono.error(new AuthenticationException(authenticationFailed));
-          } else {
-            return Mono.just(AuthenticationResponse.success(
-                    (String) authenticationRequest.getIdentity(),
-                    Map.of(
-                            "first_name", Objects.toString(user.getFirstName(), ""),
-                            "last_name", Objects.toString(user.getLastName(), "")
-                    )
-            ));
-          }
-        });
-  }
 
   private AuthenticationFailed validate(User user,
       AuthenticationRequest<?, ?> authenticationRequest) {
@@ -78,5 +50,31 @@ public class UnityAuthenticationProvider implements AuthenticationProvider<HttpR
     return userRepo.findUserForAuthentication(username.toString()).orElse(null);
   }
 
+  @Override
+  public @NonNull Publisher<AuthenticationResponse> authenticate(@Nullable HttpRequest<?> requestContext,
+      @NonNull AuthenticationRequest<Object, Object> authenticationRequest) {
+      return authenticate(authenticationRequest);
+  }
+
+  @Override
+  public @NonNull Publisher<AuthenticationResponse> authenticate(
+      @NonNull AuthenticationRequest<Object, Object> authenticationRequest) {
+            return Mono.fromCallable(() -> findUser(authenticationRequest))
+        .subscribeOn(Schedulers.boundedElastic())
+        .flatMap(user -> {
+          AuthenticationFailed authenticationFailed = validate(user, authenticationRequest);
+          if (authenticationFailed != null) {
+            return Mono.just(AuthenticationResponse.failure(authenticationFailed.getReason().toString()));
+          } else {
+            return Mono.just(AuthenticationResponse.success(
+                    (String) authenticationRequest.getIdentity(),
+                    Map.of(
+                            "first_name", Objects.toString(user.getFirstName(), ""),
+                            "last_name", Objects.toString(user.getLastName(), "")
+                    )
+            ));
+          }
+        });
+  }
 }
 

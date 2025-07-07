@@ -1,8 +1,8 @@
 plugins {
-  id("com.github.johnrengelman.shadow") version "8.1.1"
-  id("io.micronaut.application") version "4.2.1"
-  id("io.micronaut.test-resources") version "4.2.1"
-  id("io.micronaut.aot") version "4.2.1"
+  id("com.gradleup.shadow") version "${shadowVersion}"
+  id("io.micronaut.application") version "${micronautPluginVersion}"
+  id("io.micronaut.test-resources") version "${micronautPluginVersion}"
+  id("io.micronaut.aot") version "${micronautPluginVersion}"
 }
 
 version = "0.1"
@@ -31,7 +31,8 @@ dependencies {
   runtimeOnly("org.flywaydb:flyway-mysql")
   runtimeOnly("org.yaml:snakeyaml")
   testImplementation("io.micronaut:micronaut-http-client")
-  aotPlugins platform("io.micronaut.platform:micronaut-platform:4.2.3")
+
+  aotPlugins platform("io.micronaut.platform:micronaut-platform:${micronautPluginVersion}")
   aotPlugins("io.micronaut.security:micronaut-security-aot")
 
   String databaseSelection = System.getenv("UNITYAUTH_DATABASE_DEPENDENCY")
@@ -46,8 +47,8 @@ application {
   mainClass.set("io.unityfoundation.Application")
 }
 java {
-  sourceCompatibility = JavaVersion.toVersion("17")
-  targetCompatibility = JavaVersion.toVersion("17")
+  sourceCompatibility = JavaVersion.toVersion("21")
+  targetCompatibility = JavaVersion.toVersion("21")
 }
 
 graalvmNative.toolchainDetection = false
