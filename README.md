@@ -6,15 +6,35 @@ UnityAuth is a comprehensive authentication and authorization service built with
 
 To launch and be a pure consumer of the auth service, you can use the docker compose from the root:
 
+If running on mac/linux
+
 ```sh
+docker network create unity-network > /dev/null 2>&1 || true
+```
+
+Or simply using compose.
+
+```sh
+docker network create unity-network > /dev/null 2>&1 || true
 docker-compose -f docker-compose.local.yml up
 ```
 
 This will start:
 
 - **UnityAuth API** on port http://localhost:8081
-- **Frontend UI** on port http://localhost:3001
+- **UnityAuth UI** on port http://localhost:3001
 - **MySQL Database** for data persistence
+
+### Hosts File Updates
+
+For consistent internal-external service name resolution, add these to your `/etc/hosts` file
+
+```txt
+127.0.0.1 unity-auth-api
+127.0.0.1 unity-auth-ui
+127.0.0.1 libre311-api
+127.0.0.1 libre311-ui
+```
 
 You can log in with these accounts.
 **Password for all the following accounts is 'test'**
