@@ -7,4 +7,4 @@ gradle/caches
 build/
 
 docker-compose.*
-DockerfileLocal
+DockerfileAPI
