@@ -20,7 +20,6 @@ services:
       - unity-network
     environment:
       MICRONAUT_ENVIRONMENTS: docker
-      DATASOURCES_DEFAULT_URL: "jdbc:mysql://unity-auth-db:3306/test?allowPublicKeyRetrieval=true&useSSL=false"
     ports:
       - "8081:8080"
 

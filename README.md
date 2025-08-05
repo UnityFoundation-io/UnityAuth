@@ -4,25 +4,16 @@ UnityAuth is a comprehensive authentication and authorization service built with
 
 ## Local Development QuickStart
 
-To launch and be a pure consumer of the auth service, you can use the docker compose from the root:
-
-If running on mac/linux
+To launch the auth service, you can use the docker compose from the project root:
 
 ```sh
-docker network create unity-network > /dev/null 2>&1 || true
-```
-
-Or simply using compose.
-
-```sh
-docker network create unity-network > /dev/null 2>&1 || true
-docker-compose -f docker-compose.local.yml up
+docker compose -f docker-compose.local.yml up
 ```
 
 This will start:
 
-- **UnityAuth API** on port http://localhost:8081
-- **UnityAuth UI** on port http://localhost:3001
+- **UnityAuth API** on http://localhost:8081 (or http://unity-auth-api:8081)
+- **UnityAuth UI** on http://localhost:3001 (or http://unity-auth-ui:3001)
 - **MySQL Database** for data persistence
 
 ### Hosts File Updates
@@ -37,15 +28,15 @@ For consistent internal-external service name resolution, add these to your `/et
 ```
 
 You can log in with these accounts.
-**Password for all the following accounts is 'test'**
+**Password for all the following accounts is `test`**
 
-- **Unity Administrator** `unity_admin@example.co`
-- **Tenant Administrator** `tenant_admin@example.co`
-- **Libre311 Administrator** `libre311_admin@example.co`
+- **Unity Administrator** `unity_admin@example.com`
+- **Tenant Administrator** `tenant_admin@example.com`
+- **Libre311 Administrator** `libre311_admin@example.com`
 - **Libre311 Request Manager** `libre311_request_manager@example.com`
 - **Libre311 Jurisdiction Administrator** `libre311_jurisdiction_admin@example.com`
 - **Libre311 Jurisdiction Request Manager** `libre311_jurisdiction_request_manager@example.com`
-- **Stl sub-tenant admin** `stl_subtenant_admin@example.com`
+- **STL Sub-tenant Administrator** `stl_subtenant_admin@example.com`
 
 ## Project Structure
 
@@ -85,14 +76,6 @@ A command-line utility for generating secure password hashes compatible with the
 - Generate BCrypt password hashes for administrative users
 - Secure password handling (interactive mode prevents history logging)
 - Standalone tool for initial system setup and user management
-
-**Usage:**
-
-```bash
-cd AuthGenHash
-./gradlew shadowJar
-java -jar build/libs/AuthGenHash-0.1-all.jar -p
-```
 
 ### 3. Frontend (Web Administration Interface)
 

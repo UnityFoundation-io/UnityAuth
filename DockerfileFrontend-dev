@@ -1,0 +1,11 @@
+# Build the frontend and serve with nginx
+FROM node:24
+
+COPY frontend frontend
+WORKDIR frontend
+RUN npm install
+
+EXPOSE 3000
+
+# Start the app in development mode
+ENTRYPOINT ["npm", "run", "dev"]

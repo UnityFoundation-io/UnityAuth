@@ -20,15 +20,30 @@ services:
       unity-auth-db:
         condition: service_healthy
 
-  ## UI Service
-  unity-auth-ui:
-    container_name: unity-auth-ui
+  ## UI Service - Development environment
+  unity-auth-ui-dev:
+    container_name: unity-auth-ui-dev
     build:
-      dockerfile: DockerfileFrontend
+      dockerfile: DockerfileFrontend-dev
       context: .
     restart: no
     environment:
-      VITE_BACKEND_URL: http://unity-auth-api:8080
+      VITE_BACKEND_URL: http://unity-auth-api:8081
+    ports:
+      - "3001:3000"
+
+  ## UI Service - Production environment
+  ## Start by: docker compose -f docker-compose.local.yml --profile prod up
+  ## Make sure to stop unity-auth-ui-dev beforehand since they bind to the same 3001 port.
+  ## NOTE: This seems to require updates to Nginx config to make it work.
+  unity-auth-ui-prod:
+    profiles:
+      - prod
+    container_name: unity-auth-ui-prod
+    build:
+      dockerfile: DockerfileFrontend-prod
+      context: .
+    restart: no
     ports:
       - "3001:80"
 
