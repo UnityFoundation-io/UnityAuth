@@ -5,3 +5,4 @@
 /.micronaut/
 /build/
 AuthGenHash/bin
+setenv.sh

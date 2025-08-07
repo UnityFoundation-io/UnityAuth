@@ -1,4 +1,3 @@
-# Build the frontend and serve with nginx
 FROM node:24
 
 COPY frontend frontend

@@ -21,7 +21,7 @@ services:
     environment:
       MICRONAUT_ENVIRONMENTS: docker
     ports:
-      - "8081:8080"
+      - "9090:9090"
 
 networks:
   default:
