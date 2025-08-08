@@ -1,30 +1,58 @@
 # UnityAuth
 
-UnityAuth is a comprehensive authentication and authorization service built with modern microservices architecture. It provides JWT-based authentication, user management, and a web-based administration interface.
+UnityAuth is a comprehensive authentication and authorization service built with modern
+microservices architecture. It provides JWT-based authentication, user management, and
+a web-based administration interface.
 
-## Local Development QuickStart
+## QuickStart
 
+### Local Environment
+From the project root, copy `setenv.sh.example` into `setenv.sh` and update the correct
+environment variable values.
+* If used together with Libre311 project
+(https://github.com/UnityFoundation-io/Libre311.git), `LIBRE311_UI_BASE_URL` must be updated
+to base URL of Libre311 UI.
+* If use a local database, also update the `DATASOURCES_DEFAULT_*` environment variables
+  for the corresponding database.
+
+Run the UnityAuth API with:
+```shell
+source setenv.sh
+cd UnityAuth
+./gradlew run
+```
+
+Run the UnityAuth UI in another terminal windows:
+```shell
+source setenv.sh
+cd frontend
+npm install
+npm run dev
+```
+
+### Docker Environment
 To launch the auth service, you can use the docker compose from the project root:
 
 ```sh
 docker compose -f docker-compose.local.yml up
 ```
 
-This will start:
+This will start containers for the UnityAuth API, UI and database server with service
+names `unity-auth-api`, `unity-auth-ui`, and `unity-auth-db`, respectively.
 
-- **UnityAuth API** on http://localhost:8081 (or http://unity-auth-api:8081)
-- **UnityAuth UI** on http://localhost:3001 (or http://unity-auth-ui:3001)
-- **MySQL Database** for data persistence
+- **UnityAuth API** on http://localhost:9090 (inside Docker http://unity-auth-api:9090)
+- **UnityAuth UI** on http://localhost:3001 (inside Docker http://unity-auth-ui:3000)
+- **MySQL Database** is open on port `13306` in `localhost` (within Docker is port `3306`
+  with host name `unity-auth-db`)
 
-### Hosts File Updates
+#### Hosts File Updates
 
-For consistent internal-external service name resolution, add these to your `/etc/hosts` file
+When using Docker environment, add these to your `/etc/hosts` file
+for consistent internal-external service name resolution:
 
 ```txt
 127.0.0.1 unity-auth-api
 127.0.0.1 unity-auth-ui
-127.0.0.1 libre311-api
-127.0.0.1 libre311-ui
 ```
 
 You can log in with these accounts.
