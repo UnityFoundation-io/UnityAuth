@@ -2,3 +2,8 @@ micronaut:
   http:
     client:
       read-timeout: 1m
+
+
+datasources:
+  default:
+    password: "test"

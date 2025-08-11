@@ -1,0 +1,55 @@
+services:
+  ## Infrastructure Extensions
+  unity-auth-db:
+    container_name: unity-auth-db
+    networks:
+      - unity-network
+    extends:
+      file: UnityAuth/docker-compose.db.yml
+      service: unity-auth-db
+
+  ## API Extensions
+  unity-auth-api:
+    container_name: unity-auth-api
+    networks:
+      - unity-network
+    extends:
+      file: UnityAuth/docker-compose.api.yml
+      service: unity-auth-api
+    depends_on:
+      unity-auth-db:
+        condition: service_healthy
+
+  ## UI Service - Development environment
+  unity-auth-ui-dev:
+    container_name: unity-auth-ui-dev
+    build:
+      dockerfile: DockerfileFrontend-dev
+      context: .
+    restart: no
+    environment:
+      VITE_BACKEND_URL: http://unity-auth-api:8081
+    ports:
+      - "3001:3000"
+
+  ## UI Service - Production environment
+  ## Start by: docker compose -f docker-compose.local.yml --profile prod up
+  ## Make sure to stop unity-auth-ui-dev beforehand since they bind to the same 3001 port.
+  ## NOTE: This seems to require updates to Nginx config to make it work.
+  unity-auth-ui-prod:
+    profiles:
+      - prod
+    container_name: unity-auth-ui-prod
+    build:
+      dockerfile: DockerfileFrontend-prod
+      context: .
+    restart: no
+    ports:
+      - "3001:80"
+
+networks:
+  default:
+    name: unity-network
+    external: true
+  unity-network:
+    external: true

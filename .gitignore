@@ -1,5 +1,9 @@
 *~
 /.gradle/
 /.idea/
+/*/.idea/
 /.micronaut/
 /build/
+AuthGenHash/bin
+setenv.sh
+/UnityAuth/bin/

@@ -1,3 +1,9 @@
+# Config for Docker environment. See docker-compose.local.yml.
+# Hostname and port of the API and frontend containers accessed from the host machine are:
+# - API server: unity-auth-api:9090 (maps to port 9090 within the container)
+# - Frontend: unity-auth-ui-dev:3001 or localhost:3001 (maps to port 3000 within the container)
+# Note: Add DNS entries for unity-auth-api, unity-auth-ui-dev hostnames to your host, e.g.
+# /etc/hosts on Linux or Mac.
 micronaut:
   application:
     name: unity-iam
@@ -15,12 +21,12 @@ micronaut:
             - localhost:3001
             - http://127.0.0.1:3001
       localhost-pass-through: true
-    port: 8081
+    port: 9090
   security:
     authentication: bearer
 datasources:
   default:
-    url: jdbc:mysql://localhost:13306/test?allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://unity-auth-db:3306/test?allowPublicKeyRetrieval=true&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: test

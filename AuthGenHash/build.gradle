@@ -1,6 +1,8 @@
 plugins {
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.micronaut.application") version "4.2.1"
+  id("com.gradleup.shadow") version "${shadowVersion}"
+  id("io.micronaut.application") version "${micronautPluginVersion}"
+  id("io.micronaut.test-resources") version "${micronautPluginVersion}"
+  id("io.micronaut.aot") version "${micronautPluginVersion}"
 }
 
 version = "0.1"
@@ -27,8 +29,8 @@ application {
     mainClass.set("io.unityfoundation.auth.AuthGenHashCommand")
 }
 java {
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
+    sourceCompatibility = JavaVersion.toVersion("21")
+    targetCompatibility = JavaVersion.toVersion("21")
 }
 
 

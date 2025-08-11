@@ -1,0 +1,10 @@
+gradle/caches
+
+# Exclude gradle build caches but not wrapper
+.gradle/
+.DS_Store
+
+build/
+
+docker-compose.*
+DockerfileAPI

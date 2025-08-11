@@ -79,5 +79,3 @@ ALTER TABLE user_role
     ADD CONSTRAINT user_role_user_FK FOREIGN KEY (user_id) REFERENCES user (id);
 ALTER TABLE user_role
     ADD CONSTRAINT user_role_role_FK FOREIGN KEY (role_id) REFERENCES role (id);
-
-

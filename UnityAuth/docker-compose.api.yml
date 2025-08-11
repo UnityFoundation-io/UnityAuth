@@ -1,0 +1,31 @@
+services:
+  unity-auth-db:
+    container_name: unity-auth-db
+    networks:
+      - unity-network
+    extends:
+      file: docker-compose.db.yml
+      service: unity-auth-db
+
+  unity-auth-api:
+    container_name: unity-auth-api
+    build:
+      dockerfile: DockerfileAPI
+      context: .
+    depends_on:
+      unity-auth-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - unity-network
+    environment:
+      MICRONAUT_ENVIRONMENTS: docker
+    ports:
+      - "9090:9090"
+
+networks:
+  default:
+    name: unity-network
+    external: true
+  unity-network:
+    external: true
