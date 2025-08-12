@@ -28,7 +28,7 @@ services:
       context: .
     restart: no
     environment:
-      VITE_BACKEND_URL: http://unity-auth-api:8081
+      VITE_BACKEND_URL: http://unity-auth-api:9090
     ports:
       - "3001:3000"
 
