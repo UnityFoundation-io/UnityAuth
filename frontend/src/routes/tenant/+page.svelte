@@ -1,11 +1,7 @@
-<script lang="ts">
-	import { useUnityAuthContext } from '$lib/context/UnityAuthContext';
-	import Tenants from '$lib/components/Tenants/Tenants.svelte';
+<section class="h-full"></section>
 
-	const unityAuthContext = useUnityAuthContext();
-	const user = unityAuthContext.user;
-</script>
-
-{#if $user && $user.tenants}
-	<Tenants tenants={$user.tenants} />
-{/if}
+<style>
+	section {
+		background-color: hsl(var(--background));
+	}
+</style>

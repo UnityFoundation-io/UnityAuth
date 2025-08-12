@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-export const TenantsSchema = z.object({
+export const TenantSchema = z.object({
 	id: z.number(),
 	name: z.string()
 });
 
-export type Tenants = z.infer<typeof TenantsSchema>;
+export type Tenant = z.infer<typeof TenantSchema>;
 
-export const TenantsSuccessResponseSchema = z.array(TenantsSchema);
+export const TenantsSuccessResponseSchema = z.array(TenantSchema);
 
 export type TenantsSuccessResponse = z.infer<typeof TenantsSuccessResponseSchema>;
 
