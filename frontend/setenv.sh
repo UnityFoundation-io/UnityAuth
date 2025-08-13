@@ -1,1 +1,1 @@
-export VITE_BACKEND_URL=http://127.0.0.1:8081
+export VITE_BACKEND_URL=http://127.0.0.1:9090

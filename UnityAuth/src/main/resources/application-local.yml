@@ -11,11 +11,15 @@ micronaut:
             - http://localhost:3000
             - localhost:3000
             - http://127.0.0.1:3000
+            - http://libre311-ui:3000
+            - http://libre311-ui-dev:3000
             - http://localhost:3001
             - localhost:3001
             - http://127.0.0.1:3001
+            - http://unity-auth-ui:3001
+            - http://unity-auth-ui-dev:3001
       localhost-pass-through: true
-    port: 8081
+    port: 9090
   security:
     authentication: bearer
 datasources:

@@ -4,7 +4,7 @@ COPY frontend frontend
 WORKDIR frontend
 RUN npm install
 
-EXPOSE 3000
+EXPOSE 3001
 
 # Start the app in development mode
 ENTRYPOINT ["npm", "run", "dev"]
