@@ -21,6 +21,8 @@ source setenv.sh
 cd UnityAuth
 ./gradlew run
 ```
+This starts the UnityAuth API server on http://localhost:9090 if the `MICRONAUT_ENVIRONMENTS`
+environment variable contains `local`.
 
 Run the UnityAuth UI in another terminal windows:
 ```shell
@@ -29,6 +31,7 @@ cd frontend
 npm install
 npm run dev
 ```
+This starts the frontend on http://localhost:3001.
 
 ### Docker Environment
 To launch the auth service, you can use the docker compose from the project root:
@@ -41,7 +44,7 @@ This will start containers for the UnityAuth API, UI and database server with se
 names `unity-auth-api`, `unity-auth-ui`, and `unity-auth-db`, respectively.
 
 - **UnityAuth API** on http://localhost:9090 (inside Docker http://unity-auth-api:9090)
-- **UnityAuth UI** on http://localhost:3001 (inside Docker http://unity-auth-ui:3000)
+- **UnityAuth UI** on http://localhost:3001 (inside Docker http://unity-auth-ui:3001)
 - **MySQL Database** is open on port `13306` in `localhost` (within Docker is port `3306`
   with host name `unity-auth-db`)
 
@@ -72,7 +75,8 @@ This repository contains three main subprojects:
 
 ### 1. UnityAuth (Main Service)
 
-**Location:** `/UnityAuth/`
+**Location:** `/UnityAuth`
+
 **Technology:** Java 21 + Micronaut Framework
 
 The core authentication service that provides:
@@ -94,7 +98,8 @@ The core authentication service that provides:
 
 ### 2. AuthGenHash (Utility Tool)
 
-**Location:** `/AuthGenHash/`
+**Location:** `/AuthGenHash`
+
 **Technology:** Java 17 + Micronaut + PicoCLI
 
 A command-line utility for generating secure password hashes compatible with the UnityAuth service.
@@ -107,7 +112,8 @@ A command-line utility for generating secure password hashes compatible with the
 
 ### 3. Frontend (Web Administration Interface)
 
-**Location:** `/frontend/`
+**Location:** `/frontend`
+
 **Technology:** SvelteKit + TypeScript + Tailwind CSS
 
 A modern web application providing administrative interface for the UnityAuth service.

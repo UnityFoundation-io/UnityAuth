@@ -30,7 +30,7 @@ services:
     environment:
       VITE_BACKEND_URL: http://unity-auth-api:9090
     ports:
-      - "3001:3000"
+      - "3001:3001"
 
   ## UI Service - Production environment
   ## Start by: docker compose -f docker-compose.local.yml --profile prod up
