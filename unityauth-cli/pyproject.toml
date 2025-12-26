@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unityauth-cli"
+version = "1.0.0"
+description = "Command-line interface for UnityAuth administration"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "UnityAuth Team"}
+]
+keywords = ["auth", "authentication", "cli", "administration"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "click>=8.1.0,<9.0.0",
+    "requests>=2.31.0,<3.0.0",
+    "keyring>=24.3.0,<25.0.0",
+    "PyYAML>=6.0,<7.0",
+    "tabulate>=0.9.0,<1.0.0",
+    "rich>=13.7.0,<14.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-mock>=3.12.0",
+    "testcontainers>=3.7.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.5.0",
+]
+
+[project.scripts]
+unityauth = "unityauth_cli.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/UnityFoundation-io/UnityAuth"
+Repository = "https://github.com/UnityFoundation-io/UnityAuth"
+Issues = "https://github.com/UnityFoundation-io/UnityAuth/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

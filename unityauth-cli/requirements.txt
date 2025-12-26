@@ -1,0 +1,10 @@
+# UnityAuth CLI Production Dependencies
+# Generated from pyproject.toml
+# Install with: pip install -r requirements.txt
+
+click==8.1.7
+requests==2.31.0
+keyring==24.3.1
+PyYAML==6.0.1
+tabulate==0.9.0
+rich==13.7.1

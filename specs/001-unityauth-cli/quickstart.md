@@ -18,13 +18,16 @@ The UnityAuth CLI is a command-line tool that enables administrators to manage u
 ### Prerequisites
 
 - **Python 3.11 or higher** - Check with `python3 --version`
+- **pip** (Python package installer) - Check with `python3 -m pip --version`
 - **UnityAuth API access** - You need the API endpoint URL (e.g., `https://auth.example.com`)
 - **Valid credentials** - Email and password for a UnityAuth account with appropriate permissions
+
+**If Python or pip is not installed**, see the [full installation guide](../../unityauth-cli/README.md#installation) for platform-specific setup instructions.
 
 ### Install via pip
 
 ```bash
-pip install unityauth-cli
+python3 -m pip install unityauth-cli
 ```
 
 ### Verify Installation
@@ -36,6 +39,11 @@ unityauth --version
 You should see output like:
 ```
 unityauth-cli version 1.0.0
+```
+
+**Troubleshooting**: If `unityauth` command is not found, you may need to add Python's bin directory to your PATH, or use:
+```bash
+python3 -m unityauth_cli --version
 ```
 
 ## First-Time Setup
