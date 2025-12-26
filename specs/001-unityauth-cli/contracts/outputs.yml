@@ -1,0 +1,585 @@
+# UnityAuth CLI Output Format Specifications
+# Feature: 001-unityauth-cli
+# Date: 2025-12-26
+# Version: 1.0.0
+
+# This file defines output format schemas for all CLI commands across
+# the three supported output formats: table, JSON, and CSV.
+
+version: "1.0.0"
+
+# =============================================================================
+# Common Output Elements
+# =============================================================================
+
+common:
+  success_indicators:
+    - symbol: "✓"
+      color: "green"
+      usage: "Success messages"
+
+    - symbol: "✗"
+      color: "red"
+      usage: "Error messages"
+
+    - symbol: "⚠"
+      color: "yellow"
+      usage: "Warning messages"
+
+  error_format:
+    structure: "{symbol} {message}\n→ {suggested_action}"
+    example: |
+      ✗ Authentication failed: Invalid credentials
+      → Check your email and password, then try: unityauth login
+
+  progress_indicators:
+    batch_processing:
+      format: "Processing row {current}/{total}... [{bar}] {percent}%"
+      style: "Rich progress bar with ETA"
+
+# =============================================================================
+# Authentication Commands Output
+# =============================================================================
+
+login:
+  success:
+    format: "text"
+    template: "✓ Login successful as {email}"
+    fields:
+      email: "User email address from API response"
+
+  error:
+    format: "text"
+    template: "✗ Authentication failed: {error_message}\n→ {suggestion}"
+    suggestions:
+      invalid_credentials: "Check your email and password"
+      network_error: "Check API endpoint: unityauth config show"
+      version_mismatch: "Update CLI: pip install --upgrade unityauth-cli"
+
+logout:
+  success:
+    format: "text"
+    template: "✓ Logged out successfully"
+
+  error:
+    format: "text"
+    template: "✗ Logout failed: {error_message}"
+
+token_info:
+  table:
+    columns:
+      - name: "Field"
+        width: 20
+        align: "left"
+
+      - name: "Value"
+        width: 50
+        align: "left"
+
+    rows:
+      - ["User Email", "{user_email}"]
+      - ["Token Expires", "{expires_at}"]
+      - ["API Version", "{api_version}"]
+      - ["Authenticated", "{is_authenticated}"]
+
+  json:
+    schema:
+      type: "object"
+      properties:
+        userEmail:
+          type: "string"
+          example: "admin@example.com"
+        expiresAt:
+          type: "string"
+          format: "iso8601"
+          example: "2025-12-27T10:30:00Z"
+        apiVersion:
+          type: "string"
+          example: "1.0.0"
+        isAuthenticated:
+          type: "boolean"
+
+  csv:
+    headers: ["Field", "Value"]
+    example: |
+      Field,Value
+      User Email,admin@example.com
+      Token Expires,2025-12-27T10:30:00Z
+      API Version,1.0.0
+      Authenticated,true
+
+# =============================================================================
+# User Management Output
+# =============================================================================
+
+user_create:
+  success:
+    format: "text"
+    template: "✓ User created successfully (ID: {user_id})"
+
+  error:
+    format: "text"
+    template: "✗ Failed to create user: {error_message}\n→ {suggestion}"
+
+user_list:
+  table:
+    columns:
+      - name: "ID"
+        width: 6
+        align: "right"
+
+      - name: "Email"
+        width: 30
+        align: "left"
+
+      - name: "First Name"
+        width: 15
+        align: "left"
+
+      - name: "Last Name"
+        width: 15
+        align: "left"
+
+      - name: "Roles"
+        width: 20
+        align: "left"
+        format: "Comma-separated role IDs"
+
+    style: "grid"  # Unicode box-drawing characters
+    example: |
+      ╭──────┬────────────────────────────────┬─────────────────┬─────────────────┬─────────────────╮
+      │   ID │ Email                          │ First Name      │ Last Name       │ Roles           │
+      ├──────┼────────────────────────────────┼─────────────────┼─────────────────┼─────────────────┤
+      │    1 │ unity_admin@example.com        │ Unity           │ Administrator   │ 1               │
+      │    2 │ tenant_admin@example.com       │ Tenant          │ Admin           │ 2               │
+      ╰──────┴────────────────────────────────┴─────────────────┴─────────────────┴─────────────────╯
+
+  json:
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          id:
+            type: "integer"
+          email:
+            type: "string"
+          firstName:
+            type: "string"
+          lastName:
+            type: "string"
+          roles:
+            type: "array"
+            items:
+              type: "integer"
+
+    example: |
+      [
+        {
+          "id": 1,
+          "email": "unity_admin@example.com",
+          "firstName": "Unity",
+          "lastName": "Administrator",
+          "roles": [1]
+        },
+        {
+          "id": 2,
+          "email": "tenant_admin@example.com",
+          "firstName": "Tenant",
+          "lastName": "Admin",
+          "roles": [2]
+        }
+      ]
+
+  csv:
+    headers: ["id", "email", "firstName", "lastName", "roles"]
+    quoting: "minimal"  # Only quote fields with special characters
+    example: |
+      id,email,firstName,lastName,roles
+      1,unity_admin@example.com,Unity,Administrator,1
+      2,tenant_admin@example.com,Tenant,Admin,2
+
+# =============================================================================
+# Tenant Management Output
+# =============================================================================
+
+tenant_list:
+  table:
+    columns:
+      - name: "ID"
+        width: 6
+        align: "right"
+
+      - name: "Name"
+        width: 40
+        align: "left"
+
+    style: "grid"
+    example: |
+      ╭──────┬──────────────────────────────────────────╮
+      │   ID │ Name                                     │
+      ├──────┼──────────────────────────────────────────┤
+      │    1 │ Example Corp                             │
+      │    2 │ Acme Inc                                 │
+      ╰──────┴──────────────────────────────────────────╯
+
+  json:
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          id:
+            type: "integer"
+          name:
+            type: "string"
+
+    example: |
+      [
+        {"id": 1, "name": "Example Corp"},
+        {"id": 2, "name": "Acme Inc"}
+      ]
+
+  csv:
+    headers: ["id", "name"]
+    example: |
+      id,name
+      1,Example Corp
+      2,Acme Inc
+
+# =============================================================================
+# Role Management Output
+# =============================================================================
+
+role_list:
+  table:
+    columns:
+      - name: "ID"
+        width: 6
+        align: "right"
+
+      - name: "Name"
+        width: 30
+        align: "left"
+
+      - name: "Description"
+        width: 50
+        align: "left"
+
+    style: "grid"
+    example: |
+      ╭──────┬────────────────────────────────┬────────────────────────────────────────────────────╮
+      │   ID │ Name                           │ Description                                        │
+      ├──────┼────────────────────────────────┼────────────────────────────────────────────────────┤
+      │    1 │ Unity Administrator            │ System-wide administrative access                  │
+      │    2 │ Tenant Administrator           │ Tenant-level administrative access                 │
+      ╰──────┴────────────────────────────────┴────────────────────────────────────────────────────╯
+
+  json:
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          id:
+            type: "integer"
+          name:
+            type: "string"
+          description:
+            type: "string"
+
+    example: |
+      [
+        {
+          "id": 1,
+          "name": "Unity Administrator",
+          "description": "System-wide administrative access"
+        },
+        {
+          "id": 2,
+          "name": "Tenant Administrator",
+          "description": "Tenant-level administrative access"
+        }
+      ]
+
+  csv:
+    headers: ["id", "name", "description"]
+    quoting: "minimal"
+    example: |
+      id,name,description
+      1,Unity Administrator,System-wide administrative access
+      2,Tenant Administrator,Tenant-level administrative access
+
+# =============================================================================
+# Permission Commands Output
+# =============================================================================
+
+permission_get:
+  table:
+    format: "list"  # Single column list, not tabular
+    header: "Permissions for {user_email} in Tenant {tenant_id}, Service {service_id}:"
+    example: |
+      Permissions for admin@example.com in Tenant 1, Service 1:
+      - AUTH_SERVICE_VIEW-SYSTEM
+      - AUTH_SERVICE_EDIT-SYSTEM
+      - AUTH_SERVICE_VIEW-TENANT
+      - AUTH_SERVICE_EDIT-TENANT
+
+  json:
+    schema:
+      type: "object"
+      properties:
+        userEmail:
+          type: "string"
+        tenantId:
+          type: "integer"
+        serviceId:
+          type: "integer"
+        permissions:
+          type: "array"
+          items:
+            type: "string"
+
+    example: |
+      {
+        "userEmail": "admin@example.com",
+        "tenantId": 1,
+        "serviceId": 1,
+        "permissions": [
+          "AUTH_SERVICE_VIEW-SYSTEM",
+          "AUTH_SERVICE_EDIT-SYSTEM"
+        ]
+      }
+
+  csv:
+    headers: ["permission"]
+    example: |
+      permission
+      AUTH_SERVICE_VIEW-SYSTEM
+      AUTH_SERVICE_EDIT-SYSTEM
+
+permission_check:
+  table:
+    columns:
+      - name: "Permission"
+        width: 40
+        align: "left"
+
+      - name: "Has Permission"
+        width: 15
+        align: "center"
+        format: "✓ or ✗"
+
+    example: |
+      ╭──────────────────────────────────────────┬─────────────────╮
+      │ Permission                               │ Has Permission  │
+      ├──────────────────────────────────────────┼─────────────────┤
+      │ AUTH_SERVICE_VIEW-SYSTEM                 │       ✓         │
+      │ AUTH_SERVICE_EDIT-SYSTEM                 │       ✗         │
+      ╰──────────────────────────────────────────┴─────────────────╯
+
+  json:
+    schema:
+      type: "object"
+      properties:
+        hasPermission:
+          type: "boolean"
+        permissions:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              permission:
+                type: "string"
+              granted:
+                type: "boolean"
+
+    example: |
+      {
+        "hasPermission": false,
+        "permissions": [
+          {"permission": "AUTH_SERVICE_VIEW-SYSTEM", "granted": true},
+          {"permission": "AUTH_SERVICE_EDIT-SYSTEM", "granted": false}
+        ]
+      }
+
+  csv:
+    headers: ["permission", "granted"]
+    example: |
+      permission,granted
+      AUTH_SERVICE_VIEW-SYSTEM,true
+      AUTH_SERVICE_EDIT-SYSTEM,false
+
+# =============================================================================
+# Batch Operations Output
+# =============================================================================
+
+batch_create_users:
+  progress:
+    format: "rich_progress_bar"
+    template: "Processing row {current}/{total}... [{bar}] {percent}% | ETA: {eta}"
+    update_frequency: "per_row"
+
+  dry_run:
+    format: "text"
+    template: |
+      ✓ Dry run completed. Would create {count} users:
+
+      {user_preview_table}
+
+      Run without --dry-run to execute.
+
+  success:
+    format: "text"
+    template: "✓ Created {success_count} users successfully"
+
+  partial_success:
+    format: "text"
+    template: |
+      ⚠ Batch operation completed with errors:
+      - Created: {success_count}
+      - Failed: {failed_count}
+
+      Failed records:
+      {error_list}
+
+  error:
+    format: "text"
+    template: "✗ Batch operation failed: {error_message}"
+
+  error_list:
+    format: "table"
+    columns:
+      - name: "Line"
+        width: 6
+        align: "right"
+
+      - name: "Email"
+        width: 30
+        align: "left"
+
+      - name: "Error"
+        width: 50
+        align: "left"
+
+    example: |
+      ╭──────┬────────────────────────────────┬────────────────────────────────────────────────────╮
+      │ Line │ Email                          │ Error                                              │
+      ├──────┼────────────────────────────────┼────────────────────────────────────────────────────┤
+      │    5 │ duplicate@example.com          │ User already exists                                │
+      │   12 │ invalid                        │ Invalid email format                               │
+      ╰──────┴────────────────────────────────┴────────────────────────────────────────────────────╯
+
+# =============================================================================
+# Configuration Output
+# =============================================================================
+
+config_show:
+  table:
+    columns:
+      - name: "Setting"
+        width: 25
+        align: "left"
+
+      - name: "Value"
+        width: 50
+        align: "left"
+
+      - name: "Source"
+        width: 15
+        align: "left"
+
+    rows_example:
+      - ["api_url", "https://auth.example.com", "config file"]
+      - ["default_format", "table", "default"]
+      - ["timeout", "30", "config file"]
+      - ["batch.max_size", "1000", "default"]
+
+    example: |
+      ╭───────────────────────────┬────────────────────────────────────────────────────┬─────────────────╮
+      │ Setting                   │ Value                                              │ Source          │
+      ├───────────────────────────┼────────────────────────────────────────────────────┼─────────────────┤
+      │ api_url                   │ https://auth.example.com                           │ config file     │
+      │ default_format            │ table                                              │ default         │
+      │ timeout                   │ 30                                                 │ config file     │
+      │ batch.max_size            │ 1000                                               │ default         │
+      ╰───────────────────────────┴────────────────────────────────────────────────────┴─────────────────╯
+
+# =============================================================================
+# Error Output Specifications
+# =============================================================================
+
+errors:
+  authentication_error:
+    template: |
+      ✗ Authentication failed: {reason}
+      → {action}
+
+    reasons:
+      invalid_credentials: "Invalid email or password"
+      expired_token: "Your session has expired"
+      no_token: "Not authenticated"
+
+    actions:
+      invalid_credentials: "Check your credentials and run: unityauth login"
+      expired_token: "Please login again: unityauth login"
+      no_token: "Please login first: unityauth login"
+
+  permission_error:
+    template: |
+      ✗ Permission denied: {required_permission} required
+      → Contact your Unity administrator to grant this permission
+
+  network_error:
+    template: |
+      ✗ Network error: {error_detail}
+      → Check API endpoint: unityauth config show
+      → Verify connectivity: curl {api_url}/keys
+
+  validation_error:
+    template: |
+      ✗ Validation failed: {field}: {message}
+      → {suggestion}
+
+  rate_limit_error:
+    template: |
+      ✗ Rate limit exceeded: Retry after {retry_after} seconds
+      → Wait {retry_after_human} and try again
+
+  version_mismatch_error:
+    template: |
+      ✗ API version mismatch: CLI supports {cli_version}, API is {api_version}
+      → Update CLI: pip install --upgrade unityauth-cli
+      → Or contact administrator if API was recently upgraded
+
+# =============================================================================
+# Styling and Colors (for Rich library)
+# =============================================================================
+
+styling:
+  success:
+    color: "green"
+    style: "bold"
+
+  error:
+    color: "red"
+    style: "bold"
+
+  warning:
+    color: "yellow"
+    style: "bold"
+
+  info:
+    color: "cyan"
+    style: ""
+
+  table:
+    header:
+      color: "cyan"
+      style: "bold"
+    border:
+      color: "dim"
+
+  progress_bar:
+    complete_style: "green"
+    incomplete_style: "dim"
