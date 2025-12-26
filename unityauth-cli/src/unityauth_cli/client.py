@@ -10,9 +10,9 @@ import requests
 from unityauth_cli import SUPPORTED_API_VERSION, __version__
 from unityauth_cli.utils.errors import (
     AuthenticationError,
+    AuthorizationError,
     NetworkError,
     NotFoundError,
-    PermissionError,
     RateLimitError,
     ServerError,
     ValidationError,
@@ -232,7 +232,7 @@ class UnityAuthAPIClient:
                 "Run: unityauth login"
             )
         elif status_code == 403:
-            raise PermissionError(
+            raise AuthorizationError(
                 f"Permission denied: {message}",
                 "Contact your administrator to grant required permissions"
             )

@@ -4,22 +4,25 @@ Handles user account provisioning and management operations.
 """
 
 import sys
-from typing import List, Optional
 
 import click
 
-from unityauth_cli import auth
-from unityauth_cli.cli import CLIContext, console, error, info, pass_context, success, warning
+from unityauth_cli.cli import (
+    CLIContext,
+    console,
+    error,
+    handle_error,
+    info,
+    pass_context,
+    require_auth,
+    success,
+    warning,
+)
 from unityauth_cli.client import UnityAuthAPIClient
 from unityauth_cli.formatters.table import format_table
 from unityauth_cli.formatters.json_fmt import format_json
 from unityauth_cli.formatters.csv_fmt import format_csv
-from unityauth_cli.utils.errors import (
-    AuthenticationError,
-    ConfigurationError,
-    PermissionError,
-    ValidationError,
-)
+from unityauth_cli.utils.errors import AuthorizationError, ValidationError
 from unityauth_cli.utils.validation import validate_email
 
 
@@ -31,6 +34,7 @@ from unityauth_cli.utils.validation import validate_email
 @click.option('--tenant-id', required=True, type=int, help='Tenant ID for the user')
 @click.option('--role-ids', required=True, help='Comma-separated role IDs (e.g., "1,2,3")')
 @pass_context
+@require_auth
 def create(
     ctx: CLIContext,
     email: str,
@@ -39,6 +43,7 @@ def create(
     password: str,
     tenant_id: int,
     role_ids: str,
+    client: UnityAuthAPIClient,
 ) -> None:
     """Create a new user account.
 
@@ -51,21 +56,6 @@ def create(
       unityauth user create --email admin@example.com --first-name Jane --last-name Admin --password SecureP@ss --tenant-id 1 --role-ids "1,2"
     """
     try:
-        # Check API URL is configured
-        if not ctx.api_url:
-            raise ConfigurationError(
-                "API URL not configured",
-                "Set API URL: unityauth config set api_url https://auth.example.com"
-            )
-
-        # Get token from keyring
-        token = auth.get_token(ctx.api_url)
-        if not token:
-            raise AuthenticationError(
-                "Not authenticated",
-                "Run: unityauth login"
-            )
-
         # Validate email format
         if not validate_email(email):
             raise ValidationError("Invalid email format")
@@ -108,7 +98,6 @@ def create(
         if ctx.verbose:
             info(f"Creating user {email} in tenant {tenant_id}...")
 
-        client = UnityAuthAPIClient(ctx.api_url, token=token)
         response = client.post('/api/users', data=payload)
 
         # Extract user ID from response
@@ -126,7 +115,6 @@ def create(
         error_msg = str(e)
         # Provide specific guidance for common errors
         if "already exists" in error_msg.lower() or ("invalid request" in error_msg.lower() and "bad request" in error_msg.lower()):
-            # "Bad Request" often means the user already exists in the tenant
             error(
                 f"User creation failed: {error_msg}",
                 f"This typically means user '{email}' already exists in tenant {tenant_id}.\n\n"
@@ -139,18 +127,14 @@ def create(
         else:
             error(error_msg)
         sys.exit(1)
-    except PermissionError as e:
+    except AuthorizationError as e:
         error(
             str(e),
             "You need Unity Administrator or Tenant Administrator permissions to create users.\n"
             "Contact your administrator to grant required permissions."
         )
         sys.exit(3)
-    except (AuthenticationError, ConfigurationError) as e:
-        from unityauth_cli.cli import handle_error
-        handle_error(e)
     except Exception as e:
-        from unityauth_cli.cli import handle_error
         handle_error(e)
 
 
@@ -159,7 +143,14 @@ def create(
 @click.option('--tenant-id', required=True, type=int, help='Tenant ID where user has roles')
 @click.option('--role-ids', required=True, help='Comma-separated role IDs to assign (e.g., "1,2,3")')
 @pass_context
-def update(ctx: CLIContext, user_id: int, tenant_id: int, role_ids: str) -> None:
+@require_auth
+def update(
+    ctx: CLIContext,
+    user_id: int,
+    tenant_id: int,
+    role_ids: str,
+    client: UnityAuthAPIClient,
+) -> None:
     """Update user roles in a tenant.
 
     Updates the role assignments for an existing user in a specific tenant.
@@ -171,21 +162,6 @@ def update(ctx: CLIContext, user_id: int, tenant_id: int, role_ids: str) -> None
       unityauth user update 10 --tenant-id 1 --role-ids "3"
     """
     try:
-        # Check API URL is configured
-        if not ctx.api_url:
-            raise ConfigurationError(
-                "API URL not configured",
-                "Set API URL: unityauth config set api_url https://auth.example.com"
-            )
-
-        # Get token from keyring
-        token = auth.get_token(ctx.api_url)
-        if not token:
-            raise AuthenticationError(
-                "Not authenticated",
-                "Run: unityauth login"
-            )
-
         # Validate user ID
         if user_id <= 0:
             raise ValidationError("User ID must be a positive integer")
@@ -213,7 +189,6 @@ def update(ctx: CLIContext, user_id: int, tenant_id: int, role_ids: str) -> None
         if ctx.verbose:
             info(f"Updating user {user_id} roles in tenant {tenant_id} to {roles}...")
 
-        client = UnityAuthAPIClient(ctx.api_url, token=token)
         result = client.patch(f'/api/users/{user_id}/roles', data=payload)
 
         success(f"User {user_id} roles updated successfully in tenant {tenant_id}")
@@ -221,25 +196,22 @@ def update(ctx: CLIContext, user_id: int, tenant_id: int, role_ids: str) -> None
         if ctx.verbose and result:
             info(f"Updated user: {result}")
 
-    except PermissionError as e:
+    except AuthorizationError as e:
         error(
             str(e),
             "You need Unity Administrator or Tenant Administrator permissions to update users.\n"
             "Contact your administrator to grant required permissions."
         )
         sys.exit(3)
-    except (AuthenticationError, ValidationError, ConfigurationError) as e:
-        from unityauth_cli.cli import handle_error
-        handle_error(e)
     except Exception as e:
-        from unityauth_cli.cli import handle_error
         handle_error(e)
 
 
 @click.command()
 @click.option('--tenant-id', type=int, required=True, help='Tenant ID to list users from')
 @pass_context
-def list_users(ctx: CLIContext, tenant_id: int) -> None:
+@require_auth
+def list_users(ctx: CLIContext, tenant_id: int, client: UnityAuthAPIClient) -> None:
     """List users in a tenant.
 
     Lists all users in the specified tenant. Requires Unity Administrator
@@ -252,21 +224,6 @@ def list_users(ctx: CLIContext, tenant_id: int) -> None:
       unityauth user list --tenant-id 1 --format csv
     """
     try:
-        # Check API URL is configured
-        if not ctx.api_url:
-            raise ConfigurationError(
-                "API URL not configured",
-                "Set API URL: unityauth config set api_url https://auth.example.com"
-            )
-
-        # Get token from keyring
-        token = auth.get_token(ctx.api_url)
-        if not token:
-            raise AuthenticationError(
-                "Not authenticated",
-                "Run: unityauth login"
-            )
-
         # Validate tenant ID
         if tenant_id <= 0:
             raise ValidationError("Tenant ID must be a positive integer")
@@ -274,8 +231,6 @@ def list_users(ctx: CLIContext, tenant_id: int) -> None:
         # Make list request
         if ctx.verbose:
             info(f"Fetching users for tenant {tenant_id}...")
-
-        client = UnityAuthAPIClient(ctx.api_url, token=token)
 
         # Build endpoint - backend uses /api/tenants/{id}/users
         endpoint = f'/api/tenants/{tenant_id}/users'
@@ -318,16 +273,12 @@ def list_users(ctx: CLIContext, tenant_id: int) -> None:
         if ctx.verbose:
             info(f"Total users: {len(users)}")
 
-    except PermissionError as e:
+    except AuthorizationError as e:
         error(
             str(e),
             "You need appropriate permissions to list users.\n"
             "Contact your administrator to grant required permissions."
         )
         sys.exit(3)
-    except (AuthenticationError, ValidationError, ConfigurationError) as e:
-        from unityauth_cli.cli import handle_error
-        handle_error(e)
     except Exception as e:
-        from unityauth_cli.cli import handle_error
         handle_error(e)

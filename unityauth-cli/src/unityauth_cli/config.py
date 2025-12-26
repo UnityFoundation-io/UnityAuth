@@ -9,6 +9,8 @@ from typing import Any, Dict, Optional
 
 import yaml
 
+from unityauth_cli.utils.errors import ConfigurationError
+
 
 class Configuration:
     """Manages CLI configuration settings.
@@ -139,8 +141,3 @@ class Configuration:
                 self._deep_merge(base[key], value)
             else:
                 base[key] = value
-
-
-class ConfigurationError(Exception):
-    """Raised when configuration loading or saving fails."""
-    pass

@@ -3,15 +3,16 @@
 Defines the root command and global options.
 """
 
+import functools
 import sys
-from typing import Optional
+from typing import Callable, Optional, TypeVar
 
 import click
 from rich.console import Console
 
 from unityauth_cli import __version__
 from unityauth_cli.config import Configuration
-from unityauth_cli.utils.errors import UnityAuthCLIError
+from unityauth_cli.utils.errors import AuthenticationError, ConfigurationError, UnityAuthCLIError
 
 # Global console for Rich output
 console = Console()
@@ -29,6 +30,90 @@ class CLIContext:
 
 
 pass_context = click.make_pass_decorator(CLIContext, ensure=True)
+
+# Type variable for decorated functions
+F = TypeVar('F', bound=Callable[..., None])
+
+
+def require_auth(f: F) -> F:
+    """Decorator that ensures API URL is configured and user is authenticated.
+
+    Checks that:
+    1. API URL is configured (from config or --api-url flag)
+    2. User has a valid token stored in the keyring
+    3. Creates an API client and passes it as the 'client' keyword argument
+
+    Must be used after @pass_context decorator.
+
+    Example:
+        @click.command()
+        @pass_context
+        @require_auth
+        def my_command(ctx: CLIContext, client: UnityAuthAPIClient) -> None:
+            # client is ready to use
+            response = client.get('/api/users')
+    """
+    @functools.wraps(f)
+    def wrapper(ctx: CLIContext, *args, **kwargs):
+        # Import here to avoid circular imports
+        from unityauth_cli import auth
+        from unityauth_cli.client import UnityAuthAPIClient
+
+        # Check API URL is configured
+        if not ctx.api_url:
+            raise ConfigurationError(
+                "API URL not configured",
+                "Set API URL: unityauth config set api_url https://auth.example.com"
+            )
+
+        # Get token from keyring
+        token = auth.get_token(ctx.api_url)
+        if not token:
+            raise AuthenticationError(
+                "Not authenticated",
+                "Run: unityauth login"
+            )
+
+        # Get timeout from config if available
+        timeout = 30
+        if ctx.config:
+            timeout = ctx.config.get('timeout', 30)
+
+        # Create API client and pass it to the command
+        client = UnityAuthAPIClient(ctx.api_url, token=token, timeout=timeout)
+        kwargs['client'] = client
+
+        return f(ctx, *args, **kwargs)
+
+    return wrapper  # type: ignore[return-value]
+
+
+def require_config(f: F) -> F:
+    """Decorator that ensures API URL is configured.
+
+    Lighter weight than @require_auth - use when authentication is not required
+    (e.g., login command itself).
+
+    Must be used after @pass_context decorator.
+
+    Example:
+        @click.command()
+        @pass_context
+        @require_config
+        def login(ctx: CLIContext) -> None:
+            # ctx.api_url is guaranteed to be set
+            ...
+    """
+    @functools.wraps(f)
+    def wrapper(ctx: CLIContext, *args, **kwargs):
+        if not ctx.api_url:
+            raise ConfigurationError(
+                "API URL not configured",
+                "Set API URL: unityauth config set api_url https://auth.example.com"
+            )
+        return f(ctx, *args, **kwargs)
+
+    return wrapper  # type: ignore[return-value]
 
 
 @click.group()

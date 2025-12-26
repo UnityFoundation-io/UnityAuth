@@ -31,12 +31,19 @@ class AuthenticationError(UnityAuthCLIError):
     exit_code = 2
 
 
-class PermissionError(UnityAuthCLIError):
+class AuthorizationError(UnityAuthCLIError):
     """Insufficient permissions for operation.
 
     Exit code 3 indicates the user lacks required permissions.
+
+    Note: Named AuthorizationError (not PermissionError) to avoid
+    shadowing Python's built-in PermissionError.
     """
     exit_code = 3
+
+
+# Alias for backwards compatibility
+PermissionError = AuthorizationError
 
 
 class ConfigurationError(UnityAuthCLIError):
