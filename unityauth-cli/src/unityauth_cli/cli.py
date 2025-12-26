@@ -236,6 +236,8 @@ def register_commands() -> None:
     from unityauth_cli.commands.login import login, logout, token_info
     from unityauth_cli.commands.config import config
     from unityauth_cli.commands.users import create, update, list_users
+    from unityauth_cli.commands.tenants import list_tenants, tenant_users
+    from unityauth_cli.commands.roles import list_roles
 
     # Register authentication commands
     cli.add_command(login)
@@ -254,3 +256,20 @@ def register_commands() -> None:
     user.add_command(create)
     user.add_command(update)
     user.add_command(list_users, name='list')
+
+    # Register tenant discovery commands
+    @cli.group()
+    def tenant():
+        """Tenant discovery and management commands."""
+        pass
+
+    tenant.add_command(list_tenants, name='list')
+    tenant.add_command(tenant_users, name='users')
+
+    # Register role discovery commands
+    @cli.group()
+    def role():
+        """Role discovery commands."""
+        pass
+
+    role.add_command(list_roles, name='list')
