@@ -17,6 +17,7 @@ Complete command reference for the UnityAuth command-line interface.
   - [user create](#user-create)
   - [user list](#user-list)
   - [user update](#user-update)
+  - [user update-profile](#user-update-profile)
 - [Tenant Commands](#tenant-commands)
   - [tenant list](#tenant-list)
   - [tenant users](#tenant-users)
@@ -361,6 +362,66 @@ unityauth user update 5 --tenant-id 1 --role-ids "2,3"
 # Assign a single role
 unityauth user update 10 --tenant-id 1 --role-ids 2
 ```
+
+---
+
+### user update-profile
+
+Update your own user profile (first name, last name, or password).
+
+```
+unityauth user update-profile USER_ID [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `USER_ID` | Your user ID (from `token-info`) |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--first-name TEXT` | New first name (1-100 characters) |
+| `--last-name TEXT` | New last name (1-100 characters) |
+| `--password TEXT` | New password (minimum 8 characters) |
+
+**Behavior:**
+
+- This is a **self-service** command: you can only update your own profile
+- The `USER_ID` must match your authenticated user ID
+- At least one option must be provided
+- Only the specified fields are updated; others remain unchanged
+
+**Examples:**
+
+```bash
+# First, check your user ID
+unityauth token-info
+
+# Update your first name
+unityauth user update-profile 5 --first-name John
+
+# Update your last name
+unityauth user update-profile 5 --last-name Smith
+
+# Change your password
+unityauth user update-profile 5 --password "NewSecureP@ss123"
+
+# Update multiple fields at once
+unityauth user update-profile 5 --first-name John --last-name Smith --password "NewP@ss"
+```
+
+**Common Errors:**
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| "Permission denied" | User ID doesn't match authenticated user | Use `token-info` to find your user ID |
+| "At least one field must be provided" | No options specified | Provide `--first-name`, `--last-name`, or `--password` |
+| "Password must be at least 8 characters" | Password too short | Use a longer password |
+
+**Note:** To update another user's profile or roles, use `user update` (requires admin permissions).
 
 ---
 

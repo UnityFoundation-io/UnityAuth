@@ -207,6 +207,90 @@ def update(
         handle_error(e)
 
 
+@click.command('update-profile')
+@click.argument('user_id', type=int)
+@click.option('--first-name', help='New first name')
+@click.option('--last-name', help='New last name')
+@click.option('--password', help='New password (min 8 characters)')
+@pass_context
+@require_auth
+def update_profile(
+    ctx: CLIContext,
+    user_id: int,
+    first_name: str | None,
+    last_name: str | None,
+    password: str | None,
+    client: UnityAuthAPIClient,
+) -> None:
+    """Update your own user profile.
+
+    Updates your profile information (first name, last name, password).
+    You can only update your own profile - the user ID must match
+    the authenticated user.
+
+    At least one field must be provided.
+
+    \b
+    Examples:
+      unityauth user update-profile 5 --first-name John
+      unityauth user update-profile 5 --last-name Smith
+      unityauth user update-profile 5 --password NewSecureP@ss123
+      unityauth user update-profile 5 --first-name John --last-name Smith --password NewP@ss
+    """
+    try:
+        # Validate user ID
+        if user_id <= 0:
+            raise ValidationError("User ID must be a positive integer")
+
+        # Ensure at least one field is provided
+        if not any([first_name, last_name, password]):
+            raise ValidationError(
+                "At least one field must be provided: --first-name, --last-name, or --password"
+            )
+
+        # Validate password length if provided
+        if password and len(password) < 8:
+            raise ValidationError("Password must be at least 8 characters")
+
+        # Validate name lengths if provided
+        if first_name and len(first_name) > 100:
+            raise ValidationError("First name must be 1-100 characters")
+
+        if last_name and len(last_name) > 100:
+            raise ValidationError("Last name must be 1-100 characters")
+
+        # Build request payload - only include non-None fields
+        payload = {}
+        if first_name:
+            payload['firstName'] = first_name
+        if last_name:
+            payload['lastName'] = last_name
+        if password:
+            payload['password'] = password
+
+        # Make update request
+        if ctx.verbose:
+            fields = ', '.join(payload.keys())
+            info(f"Updating profile for user {user_id} (fields: {fields})...")
+
+        result = client.patch(f'/api/users/{user_id}', data=payload)
+
+        success(f"Profile updated successfully for user {user_id}")
+
+        if ctx.verbose and result:
+            info(f"Updated user: {result}")
+
+    except AuthorizationError as e:
+        error(
+            str(e),
+            "You can only update your own profile. The user ID must match your authenticated user.\n"
+            "Use 'unityauth token-info' to see your user details."
+        )
+        sys.exit(3)
+    except Exception as e:
+        handle_error(e)
+
+
 @click.command()
 @click.option('--tenant-id', type=int, required=True, help='Tenant ID to list users from')
 @pass_context

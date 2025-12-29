@@ -235,7 +235,7 @@ def register_commands() -> None:
     """Register all CLI commands with the main group."""
     from unityauth_cli.commands.login import login, logout, token_info
     from unityauth_cli.commands.config import config
-    from unityauth_cli.commands.users import create, update, list_users
+    from unityauth_cli.commands.users import create, update, update_profile, list_users
     from unityauth_cli.commands.tenants import list_tenants, tenant_users
     from unityauth_cli.commands.roles import list_roles
 
@@ -255,6 +255,7 @@ def register_commands() -> None:
 
     user.add_command(create)
     user.add_command(update)
+    user.add_command(update_profile)
     user.add_command(list_users, name='list')
 
     # Register tenant discovery commands
