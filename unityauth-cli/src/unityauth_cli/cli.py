@@ -238,6 +238,7 @@ def register_commands() -> None:
     from unityauth_cli.commands.users import create, update, update_profile, list_users
     from unityauth_cli.commands.tenants import list_tenants, tenant_users
     from unityauth_cli.commands.roles import list_roles
+    from unityauth_cli.commands.permissions import list_permissions
 
     # Register authentication commands
     cli.add_command(login)
@@ -274,3 +275,11 @@ def register_commands() -> None:
         pass
 
     role.add_command(list_roles, name='list')
+
+    # Register permissions commands
+    @cli.group()
+    def permissions():
+        """Permission discovery and verification commands."""
+        pass
+
+    permissions.add_command(list_permissions, name='list')

@@ -23,6 +23,9 @@ Complete command reference for the UnityAuth command-line interface.
   - [tenant users](#tenant-users)
 - [Role Commands](#role-commands)
   - [role list](#role-list)
+- [Permissions Commands](#permissions-commands)
+  - [permissions list](#permissions-list)
+- [Known Limitations](#known-limitations)
 - [Output Formats](#output-formats)
 - [Exit Codes](#exit-codes)
 - [Environment Variables](#environment-variables)
@@ -531,6 +534,96 @@ unityauth role list --format json
 # Find a specific role ID
 unityauth role list --format json | jq '.[] | select(.name == "Tenant Administrator")'
 ```
+
+---
+
+## Permissions Commands
+
+### permissions list
+
+List your permissions for a specific tenant and service.
+
+```
+unityauth permissions list --tenant-id TENANT_ID --service-id SERVICE_ID
+```
+
+**Required Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--tenant-id INTEGER` | Tenant ID to check permissions for |
+| `--service-id INTEGER` | Service ID to check permissions for |
+
+**Output:**
+
+Returns all permissions the authenticated user has for the specified tenant and service combination.
+
+**Examples:**
+
+```bash
+# List your permissions for tenant 1 and Libre311 service (ID: 1)
+unityauth permissions list --tenant-id 1 --service-id 1
+
+# Get JSON output
+unityauth permissions list --tenant-id 1 --service-id 1 --format json
+
+# Get CSV output
+unityauth permissions list --tenant-id 1 --service-id 1 --format csv
+```
+
+**Sample Output:**
+
+```
+┌───────────────────────────────┐
+│ Permission                    │
+├───────────────────────────────┤
+│ AUTH_SERVICE_VIEW-SYSTEM      │
+│ AUTH_SERVICE_EDIT-SYSTEM      │
+│ LIBRE311_ADMIN_VIEW-TENANT    │
+│ LIBRE311_ADMIN_EDIT-TENANT    │
+└───────────────────────────────┘
+```
+
+**Common Errors:**
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| "No tenant found" | Invalid tenant ID | Check tenant ID with `tenant list` |
+| "The service does not exist" | Invalid service ID | See [Known Limitations](#known-limitations) |
+| "Tenant/Service not available" | User not authorized for this combination | Contact your administrator |
+
+---
+
+## Known Limitations
+
+### Service Discovery
+
+**There is currently no API endpoint to list available services.** The UnityAuth backend does not expose a `/api/services` endpoint, so the CLI cannot provide a `service list` command.
+
+**What this means:**
+
+- Commands that require `--service-id` (like `permissions list`) need you to know the service ID in advance
+- Service IDs are configured by database administrators and are deployment-specific
+
+**Current Services:**
+
+In most UnityAuth deployments, the following service is available:
+
+| ID | Name | Description |
+|----|------|-------------|
+| 1 | Libre311 | Libre311 citizen request management system |
+
+**Workaround:**
+
+If you don't know the service ID, contact your UnityAuth administrator or check the database directly:
+
+```sql
+SELECT id, name, description, status FROM service;
+```
+
+**For Developers:**
+
+To add a `service list` command, a new API endpoint would need to be implemented in the UnityAuth backend (e.g., `GET /api/services`).
 
 ---
 

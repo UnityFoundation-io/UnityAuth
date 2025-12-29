@@ -11,11 +11,12 @@ The UnityAuth CLI is a cross-platform command-line tool that enables system and 
 | Feature | Status |
 |---------|--------|
 | Authentication (login/logout/token-info) | Implemented |
-| User Management (create/list/update roles) | Implemented |
+| User Management (create/list/update/update-profile) | Implemented |
 | Tenant Discovery (list/users) | Implemented |
 | Role Discovery (list) | Implemented |
+| Permissions Discovery (list) | Implemented |
 | Configuration Management | Implemented |
-| Permission Verification | Planned |
+| Service Discovery (list) | Not Available (see [Known Limitations](#known-limitations)) |
 | Batch Operations | Planned |
 
 ## Installation
@@ -125,12 +126,15 @@ unityauth
 ├── user           # User management
 │   ├── create     # Create a new user
 │   ├── list       # List users in a tenant
-│   └── update     # Update user roles
+│   ├── update     # Update user roles
+│   └── update-profile  # Update your own profile
 ├── tenant         # Tenant discovery
 │   ├── list       # List accessible tenants
 │   └── users      # List users in a tenant
-└── role           # Role discovery
-    └── list       # List available roles
+├── role           # Role discovery
+│   └── list       # List available roles
+└── permissions    # Permission discovery
+    └── list       # List your permissions for a tenant/service
 ```
 
 ## Global Options
@@ -202,6 +206,29 @@ unityauth config set api_url URL   # Set API endpoint
 unityauth config set timeout 60    # Set request timeout
 unityauth config edit              # Open in editor
 ```
+
+## Known Limitations
+
+### No Service Discovery API
+
+The UnityAuth backend does not expose an API endpoint to list available services. This means:
+
+- **No `service list` command**: The CLI cannot retrieve a list of services
+- **Service IDs must be known in advance**: Commands like `permissions list` require a `--service-id` that users must know beforehand
+
+**Common Service IDs:**
+
+| ID | Name | Description |
+|----|------|-------------|
+| 1 | Libre311 | Libre311 citizen request management |
+
+**Workaround:** Contact your UnityAuth administrator for the correct service ID, or query the database directly if you have access:
+
+```sql
+SELECT id, name, description FROM service WHERE status = 'ENABLED';
+```
+
+**For Backend Developers:** To enable service discovery in the CLI, implement a `GET /api/services` endpoint in the UnityAuth backend.
 
 ## Documentation
 

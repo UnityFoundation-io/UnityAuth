@@ -1,10 +1,12 @@
 """Shared pytest fixtures for UnityAuth CLI tests."""
 
 import pytest
+from click.testing import CliRunner
 from unittest.mock import MagicMock, patch
 
 from unityauth_cli.cli import CLIContext
 from unityauth_cli.config import Configuration
+from unityauth_cli.client import UnityAuthAPIClient
 
 
 @pytest.fixture
@@ -45,3 +47,20 @@ def mock_requests_session():
         session_instance = MagicMock()
         mock.return_value = session_instance
         yield session_instance
+
+
+@pytest.fixture
+def cli_runner():
+    """Create a Click CLI test runner."""
+    return CliRunner()
+
+
+@pytest.fixture
+def mock_api_client():
+    """Create a mock API client."""
+    client = MagicMock(spec=UnityAuthAPIClient)
+    client.get.return_value = None
+    client.post.return_value = None
+    client.patch.return_value = None
+    client.delete.return_value = None
+    return client
