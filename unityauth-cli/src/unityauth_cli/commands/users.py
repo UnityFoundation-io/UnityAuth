@@ -33,6 +33,7 @@ from unityauth_cli.utils.validation import validate_email
 @click.option('--password', required=True, help='User password (min 8 characters)')
 @click.option('--tenant-id', required=True, type=int, help='Tenant ID for the user')
 @click.option('--role-ids', required=True, help='Comma-separated role IDs (e.g., "1,2,3")')
+@click.option('--dry-run', '-n', is_flag=True, help='Preview changes without executing')
 @pass_context
 @require_auth
 def create(
@@ -43,6 +44,7 @@ def create(
     password: str,
     tenant_id: int,
     role_ids: str,
+    dry_run: bool,
     client: UnityAuthAPIClient,
 ) -> None:
     """Create a new user account.
@@ -94,6 +96,17 @@ def create(
             'roles': roles,
         }
 
+        # Handle dry-run mode
+        if dry_run:
+            console.print("\n[bold cyan][DRY RUN][/bold cyan] Would create user:")
+            console.print(f"  Email: {email}")
+            console.print(f"  First Name: {first_name}")
+            console.print(f"  Last Name: {last_name}")
+            console.print(f"  Tenant ID: {tenant_id}")
+            console.print(f"  Role IDs: {', '.join(str(r) for r in roles)}")
+            console.print("\nRun without --dry-run to execute.")
+            return
+
         # Make create request
         if ctx.verbose:
             info(f"Creating user {email} in tenant {tenant_id}...")
@@ -142,6 +155,7 @@ def create(
 @click.argument('user_id', type=int)
 @click.option('--tenant-id', required=True, type=int, help='Tenant ID where user has roles')
 @click.option('--role-ids', required=True, help='Comma-separated role IDs to assign (e.g., "1,2,3")')
+@click.option('--dry-run', '-n', is_flag=True, help='Preview changes without executing')
 @pass_context
 @require_auth
 def update(
@@ -149,6 +163,7 @@ def update(
     user_id: int,
     tenant_id: int,
     role_ids: str,
+    dry_run: bool,
     client: UnityAuthAPIClient,
 ) -> None:
     """Update user roles in a tenant.
@@ -185,6 +200,15 @@ def update(
             'roles': roles
         }
 
+        # Handle dry-run mode
+        if dry_run:
+            console.print("\n[bold cyan][DRY RUN][/bold cyan] Would update user roles:")
+            console.print(f"  User ID: {user_id}")
+            console.print(f"  Tenant ID: {tenant_id}")
+            console.print(f"  New Role IDs: {', '.join(str(r) for r in roles)}")
+            console.print("\nRun without --dry-run to execute.")
+            return
+
         # Make update request - use PATCH to /api/users/{id}/roles endpoint
         if ctx.verbose:
             info(f"Updating user {user_id} roles in tenant {tenant_id} to {roles}...")
@@ -212,6 +236,7 @@ def update(
 @click.option('--first-name', help='New first name')
 @click.option('--last-name', help='New last name')
 @click.option('--password', help='New password (min 8 characters)')
+@click.option('--dry-run', '-n', is_flag=True, help='Preview changes without executing')
 @pass_context
 @require_auth
 def update_profile(
@@ -220,6 +245,7 @@ def update_profile(
     first_name: str | None,
     last_name: str | None,
     password: str | None,
+    dry_run: bool,
     client: UnityAuthAPIClient,
 ) -> None:
     """Update your own user profile.
@@ -267,6 +293,19 @@ def update_profile(
             payload['lastName'] = last_name
         if password:
             payload['password'] = password
+
+        # Handle dry-run mode
+        if dry_run:
+            console.print("\n[bold cyan][DRY RUN][/bold cyan] Would update profile:")
+            console.print(f"  User ID: {user_id}")
+            if first_name:
+                console.print(f"  First Name: {first_name}")
+            if last_name:
+                console.print(f"  Last Name: {last_name}")
+            if password:
+                console.print("  Password: ********")
+            console.print("\nRun without --dry-run to execute.")
+            return
 
         # Make update request
         if ctx.verbose:
