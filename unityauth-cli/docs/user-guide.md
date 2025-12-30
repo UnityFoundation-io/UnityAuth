@@ -5,6 +5,8 @@ Complete command reference for the UnityAuth command-line interface.
 ## Table of Contents
 
 - [Global Options](#global-options)
+- [Setup Commands](#setup-commands)
+  - [init](#init)
 - [Authentication Commands](#authentication-commands)
   - [login](#login)
   - [logout](#logout)
@@ -57,6 +59,79 @@ unityauth --format json role list
 # Enable verbose mode for debugging
 unityauth --verbose login
 ```
+
+---
+
+## Setup Commands
+
+### init
+
+Initialize UnityAuth CLI with a guided setup wizard. This is the recommended first command for new users.
+
+```
+unityauth init [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--api-url TEXT` | UnityAuth API endpoint URL (skips prompt if provided) |
+| `--skip-login` | Skip the login step after configuration |
+| `--allow-http` | Allow insecure HTTP URLs (not recommended for production) |
+
+**Behavior:**
+
+1. Prompts for API URL (or accepts via `--api-url`)
+2. Tests connection to the UnityAuth server
+3. Saves configuration to `~/.config/unityauth-cli/config.yml`
+4. Optionally prompts to log in (in interactive mode)
+5. Displays helpful next steps
+
+**Examples:**
+
+```bash
+# Interactive setup (recommended for first-time users)
+unityauth init
+
+# Non-interactive setup with API URL
+unityauth init --api-url https://auth.example.com --skip-login
+
+# Setup for local development (allows HTTP)
+unityauth init --api-url http://localhost:8081 --allow-http --skip-login
+```
+
+**Sample Output:**
+
+```
+Welcome to UnityAuth CLI!
+Let's get you set up.
+
+API URL: https://auth.example.com
+Testing connection to https://auth.example.com...
+✓ Connection successful
+✓ Configuration saved to ~/.config/unityauth-cli/config.yml
+
+Would you like to log in now? [Y/n]: y
+Email: admin@example.com
+Password: ********
+✓ Logged in as admin@example.com
+
+Setup complete!
+
+Next steps:
+  $ unityauth tenant list              # List your tenants
+  $ unityauth user list --tenant-id 1  # List users in tenant 1
+  $ unityauth role list                # List available roles
+  $ unityauth --help                   # See all commands
+```
+
+**Exit Codes:**
+
+| Code | Meaning |
+|------|---------|
+| 0 | Setup successful |
+| 4 | Configuration error (invalid URL, connection failed) |
 
 ---
 
@@ -728,11 +803,14 @@ unityauth logout
 ### "API URL not configured"
 
 ```bash
+# First-time setup (recommended)
+unityauth init
+
+# Or manually set API URL
+unityauth config set api_url https://auth.example.com
+
 # Check current configuration
 unityauth config show
-
-# Set API URL
-unityauth config set api_url https://auth.example.com
 ```
 
 ### "Not authenticated"
