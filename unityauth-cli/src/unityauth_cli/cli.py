@@ -190,6 +190,14 @@ def cli(ctx: click.Context, api_url: Optional[str], output_format: Optional[str]
       unityauth tenant list              # List accessible tenants
       unityauth role list                # List available roles
 
+    \b
+    Option placement:
+      Global options (--verbose, --format) go BEFORE the command:
+        unityauth --verbose user list
+        unityauth -o json tenant list
+      Command options go AFTER the command:
+        unityauth user create --email user@example.com
+
     For command-specific help:
       unityauth COMMAND --help
     """
