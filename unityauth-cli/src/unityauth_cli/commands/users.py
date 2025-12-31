@@ -342,6 +342,21 @@ def update_profile(
             "Use 'unityauth token-info' to see your user details."
         )
         sys.exit(3)
+    except ValidationError as e:
+        error_msg = str(e).lower()
+        # Check for user ID mismatch error from backend
+        if "mismatch" in error_msg or "bad request" in error_msg:
+            error(
+                "User ID mismatch: You can only update your own profile",
+                f"The user ID {user_id} does not match your authenticated user.\n\n"
+                "To find your user ID:\n"
+                "  $ unityauth token-info\n\n"
+                "Note: 'update-profile' is a self-service command. To update another\n"
+                "user's details, an administrator must use the web interface or API directly."
+            )
+        else:
+            error(str(e))
+        sys.exit(1)
     except Exception as e:
         handle_error(e)
 

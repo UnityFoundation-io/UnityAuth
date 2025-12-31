@@ -167,13 +167,29 @@ def token_info(ctx: CLIContext, client: UnityAuthAPIClient) -> None:
         if ctx.output_format == 'json':
             console.print(format_json(response))
         else:
-            # Extract key fields for table display
+            # Extract email from various possible fields
+            email = (
+                response.get('username') or
+                response.get('sub') or
+                response.get('email') or
+                response.get('userEmail', 'N/A')
+            )
+
+            # Extract name if available
+            first_name = response.get('first_name', '')
+            last_name = response.get('last_name', '')
+            full_name = f"{first_name} {last_name}".strip() if first_name or last_name else None
+
+            # Build display data
             display_data = {
-                'User Email': response.get('email') or response.get('userEmail', 'N/A'),
-                'User ID': response.get('userId') or response.get('id', 'N/A'),
-                'API Endpoint': ctx.api_url,
-                'Authenticated': 'Yes',
+                'Email': email,
             }
+
+            if full_name:
+                display_data['Name'] = full_name
+
+            display_data['API Endpoint'] = ctx.api_url
+            display_data['Authenticated'] = 'Yes'
 
             # Add expiration if present
             if 'exp' in response or 'expiration' in response:

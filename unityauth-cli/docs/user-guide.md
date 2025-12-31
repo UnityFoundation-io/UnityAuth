@@ -227,9 +227,10 @@ unityauth token-info
 | Field | Description |
 |-------|-------------|
 | Email | Authenticated user's email |
-| API URL | Current API endpoint |
-| Token Status | Valid/Expired/Not Found |
-| Expires | Token expiration time (if available) |
+| Name | User's full name (if available) |
+| API Endpoint | Current API endpoint |
+| Authenticated | Yes (shown when authenticated) |
+| Token Expires | Token expiration time (Unix timestamp) |
 
 **Examples:**
 
@@ -239,6 +240,24 @@ unityauth token-info
 
 # JSON output for scripting
 unityauth token-info -o json
+```
+
+**Sample Output:**
+
+```
++---------------+-------------------------+
+| Field         | Value                   |
++===============+=========================+
+| Email         | admin@example.com       |
++---------------+-------------------------+
+| Name          | Admin User              |
++---------------+-------------------------+
+| API Endpoint  | https://auth.example.com|
++---------------+-------------------------+
+| Authenticated | Yes                     |
++---------------+-------------------------+
+| Token Expires | 1767196697              |
++---------------+-------------------------+
 ```
 
 ---
@@ -494,9 +513,13 @@ unityauth user update-profile USER_ID [OPTIONS]
 **Behavior:**
 
 - This is a **self-service** command: you can only update your own profile
-- The `USER_ID` must match your authenticated user ID
+- The `USER_ID` must match your authenticated user ID exactly
 - At least one option must be provided
 - Only the specified fields are updated; others remain unchanged
+
+**Important Limitation:**
+
+This command cannot be used by administrators to update other users' profiles. The backend enforces that the authenticated user can only modify their own account. To update another user's name or password, use the web interface or API directly.
 
 **Examples:**
 
@@ -524,7 +547,7 @@ unityauth user update-profile 5 --dry-run --first-name John --last-name Smith
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| "Permission denied" | User ID doesn't match authenticated user | Use `token-info` to find your user ID |
+| "User ID mismatch" | The user ID doesn't match your authenticated user | Use `token-info` to find your correct user ID. You can only update your own profile. |
 | "At least one field must be provided" | No options specified | Provide `--first-name`, `--last-name`, or `--password` |
 | "Password must be at least 8 characters" | Password too short | Use a longer password |
 
