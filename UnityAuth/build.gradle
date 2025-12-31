@@ -3,6 +3,7 @@ plugins {
   id("io.micronaut.application") version "${micronautPluginVersion}"
   id("io.micronaut.test-resources") version "${micronautPluginVersion}"
   id("io.micronaut.aot") version "${micronautPluginVersion}"
+  id("jacoco")
 }
 
 version = "0.1"
@@ -31,6 +32,7 @@ dependencies {
   runtimeOnly("org.flywaydb:flyway-mysql")
   runtimeOnly("org.yaml:snakeyaml")
   testImplementation("io.micronaut:micronaut-http-client")
+  testImplementation("org.junit.jupiter:junit-jupiter-params")
 
   aotPlugins platform("io.micronaut.platform:micronaut-platform:${micronautPluginVersion}")
   aotPlugins("io.micronaut.security:micronaut-security-aot")
@@ -73,5 +75,33 @@ micronaut {
     deduceEnvironment = true
     optimizeNetty = true
     configurationProperties.put("micronaut.security.jwks.enabled","false")
+  }
+}
+
+// JaCoCo Code Coverage Configuration
+jacoco {
+  toolVersion = "0.8.11"
+}
+
+tasks.named('test') {
+  finalizedBy jacocoTestReport
+}
+
+tasks.named('jacocoTestReport') {
+  dependsOn test
+  reports {
+    xml.required = true
+    html.required = true
+    csv.required = false
+  }
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+  violationRules {
+    rule {
+      limit {
+        minimum = 0.50  // 50% minimum coverage threshold
+      }
+    }
   }
 }
