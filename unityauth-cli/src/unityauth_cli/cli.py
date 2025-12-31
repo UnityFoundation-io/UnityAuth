@@ -123,13 +123,13 @@ def require_config(f: F) -> F:
     help='UnityAuth API endpoint URL (overrides config file)',
 )
 @click.option(
-    '--format',
+    '-o', '--format',
     'output_format',
     type=click.Choice(['table', 'json', 'csv'], case_sensitive=False),
     help='Output format (default: table)',
 )
 @click.option(
-    '--verbose',
+    '-v', '--verbose',
     is_flag=True,
     help='Enable verbose/debug output',
 )

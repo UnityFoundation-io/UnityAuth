@@ -26,8 +26,8 @@ from unityauth_cli.utils.errors import AuthorizationError, ValidationError
 
 
 @click.command('list')
-@click.option('--tenant-id', required=True, type=int, help='Tenant ID to check permissions for')
-@click.option('--service-id', required=True, type=int, help='Service ID to check permissions for')
+@click.option('-t', '--tenant-id', required=True, type=int, help='Tenant ID to check permissions for')
+@click.option('-s', '--service-id', required=True, type=int, help='Service ID to check permissions for')
 @pass_context
 @require_auth
 def list_permissions(

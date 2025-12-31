@@ -39,13 +39,13 @@ Complete command reference for the UnityAuth command-line interface.
 
 These options are available for all commands:
 
-| Option | Environment Variable | Description |
-|--------|---------------------|-------------|
-| `--api-url TEXT` | `UNITYAUTH_API_URL` | Override the API endpoint URL |
-| `--format [table\|json\|csv]` | - | Set output format (default: table) |
-| `--verbose` | - | Enable debug/verbose output |
-| `--version` | - | Show version and exit |
-| `--help` | - | Show help message and exit |
+| Option | Short | Environment Variable | Description |
+|--------|-------|---------------------|-------------|
+| `--api-url TEXT` | | `UNITYAUTH_API_URL` | Override the API endpoint URL |
+| `--format [table\|json\|csv]` | `-o` | - | Set output format (default: table) |
+| `--verbose` | `-v` | - | Enable debug/verbose output |
+| `--version` | | - | Show version and exit |
+| `--help` | | - | Show help message and exit |
 
 **Examples:**
 
@@ -53,11 +53,14 @@ These options are available for all commands:
 # Override API URL for a single command
 unityauth --api-url https://staging.example.com tenant list
 
-# Get JSON output
-unityauth --format json role list
+# Get JSON output (using short flag)
+unityauth -o json role list
 
-# Enable verbose mode for debugging
-unityauth --verbose login
+# Enable verbose mode for debugging (using short flag)
+unityauth -v login
+
+# Combine short flags
+unityauth -v -o json tenant list
 ```
 
 ---
@@ -120,10 +123,10 @@ Password: ********
 Setup complete!
 
 Next steps:
-  $ unityauth tenant list              # List your tenants
-  $ unityauth user list --tenant-id 1  # List users in tenant 1
-  $ unityauth role list                # List available roles
-  $ unityauth --help                   # See all commands
+  $ unityauth tenant list       # List your tenants
+  $ unityauth user list -t 1    # List users in tenant 1
+  $ unityauth role list         # List available roles
+  $ unityauth --help            # See all commands
 ```
 
 **Exit Codes:**
@@ -235,7 +238,7 @@ unityauth token-info
 unityauth token-info
 
 # JSON output for scripting
-unityauth token-info --format json
+unityauth token-info -o json
 ```
 
 ---
@@ -320,14 +323,20 @@ unityauth user create [OPTIONS]
 
 **Required Options:**
 
-| Option | Description |
-|--------|-------------|
-| `--email TEXT` | User's email address (must be unique per tenant) |
-| `--first-name TEXT` | User's first name (1-100 characters) |
-| `--last-name TEXT` | User's last name (1-100 characters) |
-| `--password TEXT` | Initial password (minimum 8 characters) |
-| `--tenant-id INTEGER` | Tenant ID to assign the user to |
-| `--role-ids TEXT` | Comma-separated role IDs (e.g., "1,2,3") |
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--email TEXT` | | User's email address (must be unique per tenant) |
+| `--first-name TEXT` | | User's first name (1-100 characters) |
+| `--last-name TEXT` | | User's last name (1-100 characters) |
+| `--password TEXT` | | Initial password (minimum 8 characters) |
+| `--tenant-id INTEGER` | `-t` | Tenant ID to assign the user to |
+| `--role-ids TEXT` | `-r` | Comma-separated role IDs (e.g., "1,2,3") |
+
+**Optional Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--dry-run` | `-n` | Preview the user creation without actually creating |
 
 **Required Permissions:**
 
@@ -343,17 +352,24 @@ unityauth user create \
   --first-name John \
   --last-name Doe \
   --password "SecureP@ss123" \
-  --tenant-id 1 \
-  --role-ids 2
+  -t 1 \
+  -r 2
 
-# Create a user with multiple roles
+# Create a user with multiple roles (using short flags)
 unityauth user create \
   --email admin@example.com \
   --first-name Jane \
   --last-name Admin \
   --password "AdminP@ss456" \
-  --tenant-id 1 \
-  --role-ids "1,2,3"
+  -t 1 -r "1,2,3"
+
+# Preview user creation without executing (dry run)
+unityauth user create --dry-run \
+  --email user@example.com \
+  --first-name John \
+  --last-name Doe \
+  --password "SecureP@ss123" \
+  -t 1 -r 2
 ```
 
 **Common Errors:**
@@ -371,14 +387,14 @@ unityauth user create \
 List all users in a specific tenant.
 
 ```
-unityauth user list --tenant-id TENANT_ID
+unityauth user list -t TENANT_ID
 ```
 
 **Required Options:**
 
-| Option | Description |
-|--------|-------------|
-| `--tenant-id INTEGER` | Tenant ID to list users from |
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--tenant-id INTEGER` | `-t` | Tenant ID to list users from |
 
 **Output Columns:**
 
@@ -394,13 +410,13 @@ unityauth user list --tenant-id TENANT_ID
 
 ```bash
 # List users in tenant 1
-unityauth user list --tenant-id 1
+unityauth user list -t 1
 
-# Get JSON output for scripting
-unityauth user list --tenant-id 1 --format json
+# Get JSON output for scripting (using short flags)
+unityauth user list -t 1 -o json
 
 # Export to CSV
-unityauth user list --tenant-id 1 --format csv > users.csv
+unityauth user list -t 1 -o csv > users.csv
 ```
 
 ---
@@ -410,7 +426,7 @@ unityauth user list --tenant-id 1 --format csv > users.csv
 Update role assignments for an existing user.
 
 ```
-unityauth user update USER_ID --tenant-id TENANT_ID --role-ids ROLE_IDS
+unityauth user update USER_ID -t TENANT_ID -r ROLE_IDS
 ```
 
 **Arguments:**
@@ -421,10 +437,16 @@ unityauth user update USER_ID --tenant-id TENANT_ID --role-ids ROLE_IDS
 
 **Required Options:**
 
-| Option | Description |
-|--------|-------------|
-| `--tenant-id INTEGER` | Tenant ID where roles are assigned |
-| `--role-ids TEXT` | Comma-separated role IDs to assign |
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--tenant-id INTEGER` | `-t` | Tenant ID where roles are assigned |
+| `--role-ids TEXT` | `-r` | Comma-separated role IDs to assign |
+
+**Optional Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--dry-run` | `-n` | Preview the role changes without actually updating |
 
 **Behavior:**
 
@@ -435,10 +457,13 @@ unityauth user update USER_ID --tenant-id TENANT_ID --role-ids ROLE_IDS
 
 ```bash
 # Update user 5's roles in tenant 1
-unityauth user update 5 --tenant-id 1 --role-ids "2,3"
+unityauth user update 5 -t 1 -r "2,3"
 
 # Assign a single role
-unityauth user update 10 --tenant-id 1 --role-ids 2
+unityauth user update 10 -t 1 -r 2
+
+# Preview role changes without executing (dry run)
+unityauth user update 5 --dry-run -t 1 -r "2,3"
 ```
 
 ---
@@ -459,11 +484,12 @@ unityauth user update-profile USER_ID [OPTIONS]
 
 **Options:**
 
-| Option | Description |
-|--------|-------------|
-| `--first-name TEXT` | New first name (1-100 characters) |
-| `--last-name TEXT` | New last name (1-100 characters) |
-| `--password TEXT` | New password (minimum 8 characters) |
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--first-name TEXT` | | New first name (1-100 characters) |
+| `--last-name TEXT` | | New last name (1-100 characters) |
+| `--password TEXT` | | New password (minimum 8 characters) |
+| `--dry-run` | `-n` | Preview the profile changes without actually updating |
 
 **Behavior:**
 
@@ -489,6 +515,9 @@ unityauth user update-profile 5 --password "NewSecureP@ss123"
 
 # Update multiple fields at once
 unityauth user update-profile 5 --first-name John --last-name Smith --password "NewP@ss"
+
+# Preview profile changes without executing (dry run)
+unityauth user update-profile 5 --dry-run --first-name John --last-name Smith
 ```
 
 **Common Errors:**
@@ -531,11 +560,11 @@ unityauth tenant list
 # List all accessible tenants
 unityauth tenant list
 
-# Get JSON output
-unityauth tenant list --format json
+# Get JSON output (using short flag)
+unityauth tenant list -o json
 
 # Get just tenant names using jq
-unityauth tenant list --format json | jq -r '.[].name'
+unityauth tenant list -o json | jq -r '.[].name'
 ```
 
 ---
@@ -570,11 +599,11 @@ unityauth tenant users TENANT_ID
 # List users in tenant 1
 unityauth tenant users 1
 
-# Get JSON output
-unityauth tenant users 1 --format json
+# Get JSON output (using short flag)
+unityauth tenant users 1 -o json
 
 # Count users in a tenant
-unityauth tenant users 1 --format json | jq length
+unityauth tenant users 1 -o json | jq length
 ```
 
 ---
@@ -603,11 +632,11 @@ unityauth role list
 # List all roles
 unityauth role list
 
-# Get JSON output
-unityauth role list --format json
+# Get JSON output (using short flag)
+unityauth role list -o json
 
 # Find a specific role ID
-unityauth role list --format json | jq '.[] | select(.name == "Tenant Administrator")'
+unityauth role list -o json | jq '.[] | select(.name == "Tenant Administrator")'
 ```
 
 ---
@@ -619,15 +648,15 @@ unityauth role list --format json | jq '.[] | select(.name == "Tenant Administra
 List your permissions for a specific tenant and service.
 
 ```
-unityauth permissions list --tenant-id TENANT_ID --service-id SERVICE_ID
+unityauth permissions list -t TENANT_ID -s SERVICE_ID
 ```
 
 **Required Options:**
 
-| Option | Description |
-|--------|-------------|
-| `--tenant-id INTEGER` | Tenant ID to check permissions for |
-| `--service-id INTEGER` | Service ID to check permissions for |
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--tenant-id INTEGER` | `-t` | Tenant ID to check permissions for |
+| `--service-id INTEGER` | `-s` | Service ID to check permissions for |
 
 **Output:**
 
@@ -637,13 +666,13 @@ Returns all permissions the authenticated user has for the specified tenant and 
 
 ```bash
 # List your permissions for tenant 1 and Libre311 service (ID: 1)
-unityauth permissions list --tenant-id 1 --service-id 1
+unityauth permissions list -t 1 -s 1
 
-# Get JSON output
-unityauth permissions list --tenant-id 1 --service-id 1 --format json
+# Get JSON output (using short flags)
+unityauth permissions list -t 1 -s 1 -o json
 
 # Get CSV output
-unityauth permissions list --tenant-id 1 --service-id 1 --format csv
+unityauth permissions list -t 1 -s 1 -o csv
 ```
 
 **Sample Output:**
@@ -790,7 +819,7 @@ export UNITYAUTH_PASSWORD="$ADMIN_PASSWORD"
 unityauth login
 
 # Perform operations
-unityauth user list --tenant-id 1 --format json > users.json
+unityauth user list -t 1 -o json > users.json
 
 # Cleanup
 unityauth logout

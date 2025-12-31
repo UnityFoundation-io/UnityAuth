@@ -31,8 +31,8 @@ from unityauth_cli.utils.validation import validate_email
 @click.option('--first-name', required=True, help='User first name')
 @click.option('--last-name', required=True, help='User last name')
 @click.option('--password', required=True, help='User password (min 8 characters)')
-@click.option('--tenant-id', required=True, type=int, help='Tenant ID for the user')
-@click.option('--role-ids', required=True, help='Comma-separated role IDs (e.g., "1,2,3")')
+@click.option('-t', '--tenant-id', required=True, type=int, help='Tenant ID for the user')
+@click.option('-r', '--role-ids', required=True, help='Comma-separated role IDs (e.g., "1,2,3")')
 @click.option('--dry-run', '-n', is_flag=True, help='Preview changes without executing')
 @pass_context
 @require_auth
@@ -153,8 +153,8 @@ def create(
 
 @click.command()
 @click.argument('user_id', type=int)
-@click.option('--tenant-id', required=True, type=int, help='Tenant ID where user has roles')
-@click.option('--role-ids', required=True, help='Comma-separated role IDs to assign (e.g., "1,2,3")')
+@click.option('-t', '--tenant-id', required=True, type=int, help='Tenant ID where user has roles')
+@click.option('-r', '--role-ids', required=True, help='Comma-separated role IDs to assign (e.g., "1,2,3")')
 @click.option('--dry-run', '-n', is_flag=True, help='Preview changes without executing')
 @pass_context
 @require_auth
@@ -331,7 +331,7 @@ def update_profile(
 
 
 @click.command()
-@click.option('--tenant-id', type=int, required=True, help='Tenant ID to list users from')
+@click.option('-t', '--tenant-id', type=int, required=True, help='Tenant ID to list users from')
 @pass_context
 @require_auth
 def list_users(ctx: CLIContext, tenant_id: int, client: UnityAuthAPIClient) -> None:

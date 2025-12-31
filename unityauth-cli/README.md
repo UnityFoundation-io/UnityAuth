@@ -233,8 +233,8 @@ SELECT id, name, description FROM service WHERE status = 'ENABLED';
 ## Documentation
 
 - [User Guide](docs/user-guide.md) - Complete command reference
-- [Quickstart Guide](../specs/001-unityauth-cli/quickstart.md) - Detailed usage scenarios
-- [UnityAuth API](../CLAUDE.md) - Backend API reference
+
+- [API Reference](docs/api-reference.md) - UnityAuth API documentation
 
 ## Development
 
