@@ -11,6 +11,7 @@ from unityauth_cli.cli import (
     CLIContext,
     console,
     error,
+    format_option,
     handle_error,
     info,
     pass_context,
@@ -51,6 +52,11 @@ def create(
 
     Creates a new user with the specified details and assigns roles.
     Requires Unity Administrator or Tenant Administrator permissions.
+
+    \b
+    Finding IDs:
+      - Tenant IDs: Run 'unityauth tenant list'
+      - Role IDs: Run 'unityauth role list'
 
     \b
     Examples:
@@ -172,6 +178,12 @@ def update(
     This replaces all current roles with the specified roles for that tenant.
 
     \b
+    Finding IDs:
+      - User IDs: Run 'unityauth user list --tenant-id <ID>'
+      - Tenant IDs: Run 'unityauth tenant list'
+      - Role IDs: Run 'unityauth role list'
+
+    \b
     Examples:
       unityauth user update 5 --tenant-id 1 --role-ids "1,2"
       unityauth user update 10 --tenant-id 1 --role-ids "3"
@@ -257,6 +269,10 @@ def update_profile(
     At least one field must be provided.
 
     \b
+    Finding your user ID:
+      Run 'unityauth token-info' to see your user ID.
+
+    \b
     Examples:
       unityauth user update-profile 5 --first-name John
       unityauth user update-profile 5 --last-name Smith
@@ -332,6 +348,7 @@ def update_profile(
 
 @click.command()
 @click.option('-t', '--tenant-id', type=int, required=True, help='Tenant ID to list users from')
+@format_option
 @pass_context
 @require_auth
 def list_users(ctx: CLIContext, tenant_id: int, client: UnityAuthAPIClient) -> None:
@@ -341,10 +358,14 @@ def list_users(ctx: CLIContext, tenant_id: int, client: UnityAuthAPIClient) -> N
     or Tenant Administrator permissions for the target tenant.
 
     \b
+    Finding IDs:
+      - Tenant IDs: Run 'unityauth tenant list'
+
+    \b
     Examples:
       unityauth user list --tenant-id 1
-      unityauth user list --tenant-id 1 --format json
-      unityauth user list --tenant-id 1 --format csv
+      unityauth user list --tenant-id 1 -o json
+      unityauth user list --tenant-id 1 -o csv
     """
     try:
         # Validate tenant ID

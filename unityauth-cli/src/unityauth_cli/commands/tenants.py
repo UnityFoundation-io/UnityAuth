@@ -11,6 +11,7 @@ from unityauth_cli.cli import (
     CLIContext,
     console,
     error,
+    format_option,
     handle_error,
     info,
     pass_context,
@@ -25,6 +26,7 @@ from unityauth_cli.utils.errors import AuthorizationError, ValidationError
 
 
 @click.command('list')
+@format_option
 @pass_context
 @require_auth
 def list_tenants(ctx: CLIContext, client: UnityAuthAPIClient) -> None:
@@ -35,10 +37,16 @@ def list_tenants(ctx: CLIContext, client: UnityAuthAPIClient) -> None:
     Tenant Administrators see only their assigned tenants.
 
     \b
+    Tenant IDs are used in:
+      - 'unityauth user list --tenant-id <ID>'
+      - 'unityauth user create --tenant-id <ID>'
+      - 'unityauth permissions list --tenant-id <ID>'
+
+    \b
     Examples:
       unityauth tenant list
-      unityauth tenant list --format json
-      unityauth tenant list --format csv
+      unityauth tenant list -o json
+      unityauth tenant list -o csv
     """
     try:
         if ctx.verbose:
@@ -89,6 +97,7 @@ def list_tenants(ctx: CLIContext, client: UnityAuthAPIClient) -> None:
 
 @click.command('users')
 @click.argument('tenant_id', type=int)
+@format_option
 @pass_context
 @require_auth
 def tenant_users(ctx: CLIContext, tenant_id: int, client: UnityAuthAPIClient) -> None:
@@ -100,8 +109,8 @@ def tenant_users(ctx: CLIContext, tenant_id: int, client: UnityAuthAPIClient) ->
     \b
     Examples:
       unityauth tenant users 1
-      unityauth tenant users 1 --format json
-      unityauth tenant users 2 --format csv
+      unityauth tenant users 1 -o json
+      unityauth tenant users 2 -o csv
     """
     try:
         # Validate tenant ID

@@ -11,6 +11,7 @@ from unityauth_cli.cli import (
     CLIContext,
     console,
     error,
+    format_option,
     handle_error,
     info,
     pass_context,
@@ -28,6 +29,7 @@ from unityauth_cli.utils.errors import AuthorizationError, ValidationError
 @click.command('list')
 @click.option('-t', '--tenant-id', required=True, type=int, help='Tenant ID to check permissions for')
 @click.option('-s', '--service-id', required=True, type=int, help='Service ID to check permissions for')
+@format_option
 @pass_context
 @require_auth
 def list_permissions(
@@ -42,9 +44,14 @@ def list_permissions(
     tenant and service combination.
 
     \b
+    Finding IDs:
+      - Tenant IDs: Run 'unityauth tenant list' to see available tenants
+      - Service IDs: Assigned by system administrator (common: 1=Libre311)
+
+    \b
     Examples:
       unityauth permissions list --tenant-id 1 --service-id 1
-      unityauth permissions list --tenant-id 1 --service-id 1 --format json
+      unityauth permissions list --tenant-id 1 --service-id 1 -o json
     """
     try:
         # Validate IDs

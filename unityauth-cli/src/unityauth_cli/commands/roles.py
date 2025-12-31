@@ -11,6 +11,7 @@ from unityauth_cli.cli import (
     CLIContext,
     console,
     error,
+    format_option,
     handle_error,
     info,
     pass_context,
@@ -25,6 +26,7 @@ from unityauth_cli.utils.errors import AuthorizationError
 
 
 @click.command('list')
+@format_option
 @pass_context
 @require_auth
 def list_roles(ctx: CLIContext, client: UnityAuthAPIClient) -> None:
@@ -34,10 +36,15 @@ def list_roles(ctx: CLIContext, client: UnityAuthAPIClient) -> None:
     Requires Unity Administrator or Tenant Administrator permissions.
 
     \b
+    Role IDs are used in:
+      - 'unityauth user create --role-ids "1,2"'
+      - 'unityauth user update <ID> --role-ids "1,2"'
+
+    \b
     Examples:
       unityauth role list
-      unityauth role list --format json
-      unityauth role list --format csv
+      unityauth role list -o json
+      unityauth role list -o csv
     """
     try:
         if ctx.verbose:

@@ -13,6 +13,7 @@ from unityauth_cli.cli import (
     CLIContext,
     console,
     error,
+    format_option,
     handle_error,
     info,
     pass_context,
@@ -141,6 +142,7 @@ def logout(ctx: CLIContext) -> None:
 
 
 @click.command(name='token-info')
+@format_option
 @pass_context
 @require_auth
 def token_info(ctx: CLIContext, client: UnityAuthAPIClient) -> None:
@@ -152,7 +154,7 @@ def token_info(ctx: CLIContext, client: UnityAuthAPIClient) -> None:
     \b
     Examples:
       unityauth token-info
-      unityauth token-info --format json
+      unityauth token-info -o json
     """
     try:
         # Make token_info request

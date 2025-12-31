@@ -116,6 +116,48 @@ def require_config(f: F) -> F:
     return wrapper  # type: ignore[return-value]
 
 
+def format_option(f: F) -> F:
+    """Decorator that adds -o/--format option to a command.
+
+    Allows format to be specified after the command (more intuitive):
+        unityauth tenant list -o json
+
+    If provided, overrides the global format from the parent context.
+    Must be used before @pass_context decorator.
+
+    Example:
+        @click.command()
+        @format_option
+        @pass_context
+        @require_auth
+        def list_tenants(ctx: CLIContext, client: UnityAuthAPIClient) -> None:
+            # ctx.output_format is set (from local -o or global -o or config)
+            ...
+    """
+    @functools.wraps(f)
+    def wrapper(*args, output_format: Optional[str] = None, **kwargs):
+        # Override context format if local option provided
+        if output_format:
+            # Get CLIContext from Click's current context
+            click_ctx = click.get_current_context(silent=True)
+            if click_ctx:
+                cli_ctx = click_ctx.find_object(CLIContext)
+                if cli_ctx:
+                    cli_ctx.output_format = output_format.lower()
+
+        return f(*args, **kwargs)
+
+    # Apply the click option decorator
+    decorated = click.option(
+        '-o', '--format',
+        'output_format',
+        type=click.Choice(['table', 'json', 'csv'], case_sensitive=False),
+        help='Output format (default: table)',
+    )(wrapper)
+
+    return decorated  # type: ignore[return-value]
+
+
 @click.group()
 @click.option(
     '--api-url',
@@ -146,7 +188,7 @@ def cli(ctx: click.Context, api_url: Optional[str], output_format: Optional[str]
       unityauth user create ...          # Create a new user
       unityauth user list --tenant-id 1  # List users in tenant
       unityauth tenant list              # List accessible tenants
-      unityauth batch create-users FILE  # Batch create from CSV
+      unityauth role list                # List available roles
 
     For command-specific help:
       unityauth COMMAND --help

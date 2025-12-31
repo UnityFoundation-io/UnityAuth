@@ -9,7 +9,7 @@ import sys
 
 import click
 
-from unityauth_cli.cli import CLIContext, console, error, info, pass_context, success
+from unityauth_cli.cli import CLIContext, console, error, format_option, info, pass_context, success
 from unityauth_cli.formatters.table import format_key_value_table
 from unityauth_cli.formatters.json_fmt import format_json
 
@@ -31,6 +31,7 @@ def config() -> None:
 
 
 @config.command()
+@format_option
 @pass_context
 def show(ctx: CLIContext) -> None:
     """Display current configuration settings.
@@ -40,7 +41,7 @@ def show(ctx: CLIContext) -> None:
     \b
     Examples:
       unityauth config show
-      unityauth config show --format json
+      unityauth config show -o json
     """
     try:
         if not ctx.config:
