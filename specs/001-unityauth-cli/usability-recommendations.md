@@ -23,19 +23,21 @@ unityauth user list -t 1 -o json
 ```
 
 **Flag Mapping**:
-| Long Flag | Short Flag | Commands |
-|-----------|------------|----------|
-| `--tenant-id` | `-t` | user list, user create, user update, tenant users, permissions list |
-| `--format` | `-o` | All commands (global) |
-| `--verbose` | `-v` | All commands (global) |
-| `--email` | `-e` | user create, login |
-| `--role-ids` | `-r` | user create, user update |
-| `--first-name` | `-f` | user create, user update-profile |
-| `--last-name` | `-l` | user create, user update-profile |
-| `--password` | `-p` | user create, user update-profile |
-| `--service-id` | `-s` | permissions list |
+| Long Flag | Short Flag | Commands | Status |
+|-----------|------------|----------|--------|
+| `--tenant-id` | `-t` | user list, user create, user update, permissions list | ✅ Implemented |
+| `--format` | `-o` | All commands (global) | ✅ Implemented |
+| `--verbose` | `-v` | All commands (global) | ✅ Implemented |
+| `--role-ids` | `-r` | user create, user update | ✅ Implemented |
+| `--service-id` | `-s` | permissions list | ✅ Implemented |
+| `--email` | `-e` | user create, login | ⏸️ Deferred (infrequent use) |
+| `--first-name` | `-f` | user create, user update-profile | ⏸️ Deferred (infrequent use) |
+| `--last-name` | `-l` | user create, user update-profile | ⏸️ Deferred (infrequent use) |
+| `--password` | `-p` | user create, user update-profile | ⏸️ Deferred (security: prefer prompts) |
 
 **Implementation**: Add `short_flag` parameter to Click options.
+
+**Note**: Short flags were selectively added to the most frequently used options to avoid namespace pollution. Options like `--email`, `--first-name`, `--last-name`, and `--password` are typically only used once per command invocation and don't benefit as much from shorter typing. Additionally, `--password` is better handled via secure prompts than command-line flags.
 
 ---
 
@@ -417,17 +419,183 @@ Errors:
 
 ---
 
+## Priority 4 (Documentation)
+
+### 4.1 Document `--dry-run` Flag
+
+**Problem**: The `--dry-run` / `-n` flag was implemented but not documented in the user guide.
+
+**Affected Commands**:
+- `user create --dry-run`
+- `user update --dry-run`
+- `user update-profile --dry-run`
+
+**Files to Update**:
+- `docs/user-guide.md` - Add `--dry-run` option to each command's options table and examples
+
+**Documentation to Add** (example for `user create`):
+
+```markdown
+**Optional Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--dry-run`, `-n` | Preview changes without executing |
+
+**Examples:**
+
+\`\`\`bash
+# Preview user creation without actually creating
+unityauth user create --dry-run \
+  --email user@example.com \
+  --first-name John \
+  --last-name Doe \
+  --password "SecureP@ss123" \
+  --tenant-id 1 \
+  --role-ids "2,3"
+\`\`\`
+```
+
+---
+
+### 4.2 Document All Configuration Keys
+
+**Problem**: The `config set` documentation only lists 3 keys but the implementation supports 10+.
+
+**Current Documentation** (`docs/user-guide.md:273-280`):
+- `api_url`, `default_format`, `timeout`
+
+**Missing Keys** (from `config.py:23-38`):
+- `api_version` - API version compatibility
+- `batch.max_size` - Maximum batch operation size
+- `batch.continue_on_error` - Continue on errors in batch mode
+- `batch.delay_ms` - Delay between batch API calls
+- `output.show_headers` - Show table headers
+- `output.table_style` - Table style (grid, simple, etc.)
+- `output.color_enabled` - Enable colored output
+
+**Files to Update**:
+- `docs/user-guide.md` - Expand config set Available Keys table
+
+**Documentation to Add**:
+
+```markdown
+**Available Keys:**
+
+| Key | Description | Default | Example |
+|-----|-------------|---------|---------|
+| `api_url` | UnityAuth API endpoint | `null` | `https://auth.example.com` |
+| `api_version` | API version for compatibility | `1.0` | `1.0` |
+| `default_format` | Default output format | `table` | `table`, `json`, `csv` |
+| `timeout` | Request timeout in seconds | `30` | `60` |
+| `batch.max_size` | Max records per batch operation | `1000` | `500` |
+| `batch.continue_on_error` | Continue batch on errors | `true` | `false` |
+| `batch.delay_ms` | Delay between batch calls (ms) | `0` | `100` |
+| `output.show_headers` | Show table headers | `true` | `false` |
+| `output.table_style` | Table formatting style | `grid` | `simple`, `plain` |
+| `output.color_enabled` | Enable colored output | `true` | `false` |
+
+**Examples:**
+
+\`\`\`bash
+# Set nested configuration using dot notation
+unityauth config set batch.max_size 500
+unityauth config set output.color_enabled false
+\`\`\`
+```
+
+---
+
+### 4.3 Add `init` to README Command Structure
+
+**Problem**: The README command structure tree omits the `init` command.
+
+**File to Update**: `README.md`
+
+**Current** (line 117-138):
+```
+unityauth
+├── login
+├── logout
+...
+```
+
+**Proposed**:
+```
+unityauth
+├── init           # First-time setup wizard
+├── login          # Authenticate with UnityAuth
+├── logout         # Remove stored credentials
+...
+```
+
+---
+
+### 4.4 Add Installation Reference to User Guide
+
+**Problem**: User guide has no installation instructions; users must find README first.
+
+**File to Update**: `docs/user-guide.md`
+
+**Proposed**: Add after the title/intro:
+
+```markdown
+## Installation
+
+See the [README](../README.md#installation) for installation instructions.
+
+**Quick Install:**
+\`\`\`bash
+cd unityauth-cli
+python3 -m venv venv
+source venv/bin/activate
+python3 -m pip install -e .
+\`\`\`
+```
+
+---
+
+### 4.5 Add Quick Start to User Guide
+
+**Problem**: User guide jumps straight into detailed command reference without a quick orientation.
+
+**File to Update**: `docs/user-guide.md`
+
+**Proposed**: Add after Installation section:
+
+```markdown
+## Quick Start
+
+\`\`\`bash
+# 1. First-time setup
+unityauth init
+
+# 2. Or configure manually and login
+unityauth config set api_url https://auth.example.com
+unityauth login
+
+# 3. Explore
+unityauth tenant list
+unityauth role list
+unityauth user list --tenant-id 1
+\`\`\`
+
+For detailed command reference, see the sections below.
+```
+
+---
+
 ## Implementation Checklist
 
 ### Phase 1: Quick Wins (P1)
-- [ ] Add short flags to all commands
+- [x] Add short flags to common commands (`-t`, `-o`, `-v`, `-r`, `-s`)
 - [ ] Add `whoami` command
 - [ ] Add interactive mode detection (`sys.stdin.isatty()`)
 - [ ] Implement interactive wizard for `user create`
 - [ ] Allow empty `--role-ids` to remove all roles from user
 
 ### Phase 2: Enhanced UX (P2)
-- [ ] Add `--dry-run` flag to mutating commands
+- [x] Add `--dry-run` flag to mutating commands
 - [ ] Add typo suggestions with `click-didyoumean`
 - [x] Create `unityauth init` setup wizard
 - [ ] Improve empty state messages with next steps
@@ -439,6 +607,13 @@ Errors:
 - [ ] Reorganize help output by category
 - [ ] Add confirmation prompts for destructive actions
 - [ ] Add Rich progress bars for batch operations
+
+### Phase 4: Documentation (P4)
+- [x] Document `--dry-run` flag in user guide (user create/update/update-profile)
+- [ ] Document all configuration keys in user guide (config set section)
+- [ ] Add `init` command to README command structure tree
+- [ ] Add installation reference to user guide
+- [ ] Add quick start section to user guide
 
 ---
 
@@ -456,6 +631,8 @@ Errors:
 | `commands/batch.py` | Add `--dry-run`, Rich progress bars |
 | `utils/interactive.py` | New file for interactive prompts |
 | `pyproject.toml` | Add `click-didyoumean` dependency |
+| `docs/user-guide.md` | Add `--dry-run` docs, config keys, installation, quick start |
+| `README.md` | Add `init` to command structure tree |
 
 ---
 
