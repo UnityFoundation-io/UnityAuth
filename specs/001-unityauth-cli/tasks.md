@@ -134,13 +134,17 @@
 
 ### Implementation for User Story 4
 
-- [ ] T048 [P] [US4] Implement permission get command in unityauth-cli/src/unityauth_cli/commands/permissions.py calling POST /api/principal/permissions (uses @require_auth decorator)
+**Status Note**: `permissions list` command is already implemented (equivalent to spec's `permission get`), using `POST /api/principal/permissions`. Only `permission check` is missing.
+
+- [x] T048 [P] [US4] Implement permission get command (IMPLEMENTED as `permissions list` in unityauth-cli/src/unityauth_cli/commands/permissions.py) calling POST /api/principal/permissions (uses @require_auth decorator)
 - [ ] T049 [P] [US4] Implement permission check command in unityauth-cli/src/unityauth_cli/commands/permissions.py calling POST /api/hasPermission (uses @require_auth decorator)
-- [ ] T050 [US4] Add permission command group to CLI in unityauth-cli/src/unityauth_cli/cli.py with subcommands (get, check)
-- [ ] T051 [US4] Add formatted output for permission lists (readable list format with scope indicators)
+- [x] T050 [US4] Add permission command group to CLI (IMPLEMENTED as `permissions` group in unityauth-cli/src/unityauth_cli/cli.py)
+- [x] T051 [US4] Add formatted output for permission lists (IMPLEMENTED with table/JSON/CSV support)
 - [ ] T052 [US4] Add error handling for inactive users/tenants/services with clear status messages
 
-**Checkpoint**: Permission verification fully functional - useful for debugging and validation scenarios
+**Deviation from Spec**: Command is named `permissions list` instead of `permission get` for more intuitive naming. The `permission check` command (FR-011) is NOT implemented.
+
+**Checkpoint**: Permission listing functional - `permission check` command needed for full story completion
 
 ---
 
@@ -234,8 +238,8 @@ All commands MUST use:
 - ✅ Phase 3: User Story 1 - COMPLETE with unit tests
 - ✅ Phase 4: User Story 2 - COMPLETE (except T039 research for update 403 issue)
 - ✅ Phase 5: User Story 3 - COMPLETE (tenant list, tenant users, role list with formatting)
-- ⏳ Phase 6: User Story 4 - NOT STARTED
-- ⏳ Phase 7: User Story 5 - NOT STARTED
+- 🔄 Phase 6: User Story 4 - PARTIALLY COMPLETE (`permissions list` works, `permission check` missing)
+- ⏳ Phase 7: User Story 5 - NOT STARTED (batch operations)
 - 🔄 Phase 8: Polish - PARTIALLY COMPLETE (config commands done, docs pending)
 
 ---
@@ -243,23 +247,26 @@ All commands MUST use:
 ## Summary Statistics
 
 - **Total Tasks**: 73 tasks
-- **Completed**: 57 tasks ✅
-- **Remaining**: 16 tasks
+- **Completed**: 60 tasks ✅
+- **Remaining**: 13 tasks
 - **Setup Phase**: 6 tasks (COMPLETE)
 - **Foundational Phase**: 12 tasks (COMPLETE - includes architectural improvements)
 - **User Story 1 (P1)**: 13 tasks - Authentication 🎯 MVP (COMPLETE with tests)
 - **User Story 2 (P2)**: 9 tasks - User Management (8 complete, 1 research pending)
 - **User Story 3 (P3)**: 7 tasks - Discovery (COMPLETE)
-- **User Story 4 (P4)**: 5 tasks - Permission Verification (NOT STARTED)
+- **User Story 4 (P4)**: 5 tasks - Permission Verification (3 complete, 2 remaining - `permission check` not implemented)
 - **User Story 5 (P5)**: 9 tasks - Batch Operations (NOT STARTED)
 - **Polish Phase**: 12 tasks - Cross-cutting concerns (8 complete, 4 pending)
 
 **Parallel Opportunities**: 35 tasks marked [P] can run in parallel within their phases
 
+**Implementation Status**: See [implementation-status.md](implementation-status.md) for detailed comparison against spec.
+
 **Next Steps**:
-1. Complete T039 (research update 403 issue)
-2. Implement Phase 6: User Story 4 (Permission Verification)
-3. Update documentation (T070, T071)
+1. Complete T039 (research update 403 issue for `user update` command)
+2. Implement T049 (`permission check` command calling POST /api/hasPermission)
+3. Implement Phase 7: Batch Operations (T053-T061)
+4. Update documentation (T070, T071)
 
 **Format Validation**: ✅ ALL tasks follow the checklist format: `- [ ] [TaskID] [P?] [Story?] Description with file path`
 

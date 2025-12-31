@@ -590,12 +590,12 @@ For detailed command reference, see the sections below.
 ### Phase 1: Quick Wins (P1)
 - [x] Add short flags to common commands (`-t`, `-o`, `-v`, `-r`, `-s`)
 - [ ] Add `whoami` command
-- [ ] Add interactive mode detection (`sys.stdin.isatty()`)
+- [x] Add interactive mode detection (`sys.stdin.isatty()`) - Implemented in login.py and init.py
 - [ ] Implement interactive wizard for `user create`
 - [ ] Allow empty `--role-ids` to remove all roles from user
 
 ### Phase 2: Enhanced UX (P2)
-- [x] Add `--dry-run` flag to mutating commands
+- [x] Add `--dry-run` flag to mutating commands (user create, update, update-profile)
 - [ ] Add typo suggestions with `click-didyoumean`
 - [x] Create `unityauth init` setup wizard
 - [ ] Improve empty state messages with next steps
@@ -606,7 +606,7 @@ For detailed command reference, see the sections below.
 - [ ] Add `--quiet` flag for scripting
 - [ ] Reorganize help output by category
 - [ ] Add confirmation prompts for destructive actions
-- [ ] Add Rich progress bars for batch operations
+- [ ] Add Rich progress bars for batch operations (blocked: batch not implemented)
 
 ### Phase 4: Documentation (P4)
 - [x] Document `--dry-run` flag in user guide (user create/update/update-profile)
@@ -614,6 +614,8 @@ For detailed command reference, see the sections below.
 - [ ] Add `init` command to README command structure tree
 - [ ] Add installation reference to user guide
 - [ ] Add quick start section to user guide
+
+**Status**: See [implementation-status.md](implementation-status.md) for full spec compliance matrix.
 
 ---
 
