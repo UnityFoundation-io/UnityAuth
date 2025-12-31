@@ -522,6 +522,178 @@ class SecurityEdgeCasesTest {
             }
             // If keyId is null, that's also valid - server doesn't require kid in token header
         }
+
+        @Test
+        @DisplayName("Token signed with completely different RSA key should be rejected")
+        void tokenSignedWithUnknownKey_shouldBeRejected() throws Exception {
+            // Generate a completely different RSA key pair not configured in the server
+            java.security.KeyPairGenerator keyGen = java.security.KeyPairGenerator.getInstance("RSA");
+            keyGen.initialize(2048);
+            java.security.KeyPair keyPair = keyGen.generateKeyPair();
+
+            RSAKey unknownKey = new RSAKey.Builder((java.security.interfaces.RSAPublicKey) keyPair.getPublic())
+                    .privateKey((java.security.interfaces.RSAPrivateKey) keyPair.getPrivate())
+                    .keyID("unknown-attacker-key-id")
+                    .algorithm(JWSAlgorithm.RS256)
+                    .build();
+
+            JWSSigner signer = new RSASSASigner(unknownKey);
+
+            Instant now = Instant.now();
+            JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                    .subject("person1@test.io")
+                    .issueTime(Date.from(now))
+                    .expirationTime(Date.from(now.plusSeconds(3600)))
+                    .claim("first_name", "Test")
+                    .claim("last_name", "User")
+                    .build();
+
+            SignedJWT signedJWT = new SignedJWT(
+                    new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(unknownKey.getKeyID()).build(),
+                    claimsSet);
+            signedJWT.sign(signer);
+
+            String token = signedJWT.serialize();
+
+            HttpRequest<?> request = HttpRequest.POST("/api/hasPermission",
+                            new HasPermissionRequest(1L, 1L, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
+                    .bearerAuth(token);
+
+            // Token signed with unknown key should be rejected
+            HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+                    client.toBlocking().exchange(request, AuthController.HasPermissionResponse.class));
+
+            assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
+        }
+
+        @Test
+        @DisplayName("Token with 'none' algorithm should be rejected - protects against alg:none attack")
+        void tokenWithNoneAlgorithm_shouldBeRejected() {
+            // Construct a token with alg:none (a common JWT attack vector)
+            // Header: {"alg":"none","typ":"JWT"}
+            String header = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0";
+            // Payload with valid claims
+            String payload = "eyJzdWIiOiJwZXJzb24xQHRlc3QuaW8iLCJpYXQiOjE3MzU2MDAwMDAsImV4cCI6MTczNTY4NjQwMCwiZmlyc3RfbmFtZSI6IlRlc3QiLCJsYXN0X25hbWUiOiJVc2VyIn0";
+            // Empty signature for alg:none
+            String noneAlgToken = header + "." + payload + ".";
+
+            HttpRequest<?> request = HttpRequest.POST("/api/hasPermission",
+                            new HasPermissionRequest(1L, 1L, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
+                    .bearerAuth(noneAlgToken);
+
+            // Server MUST reject tokens with 'none' algorithm
+            HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+                    client.toBlocking().exchange(request, AuthController.HasPermissionResponse.class));
+
+            assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus(),
+                    "Tokens with 'none' algorithm must be rejected to prevent alg:none attacks");
+        }
+
+        @Test
+        @DisplayName("Token with modified payload should be rejected - signature validation")
+        void tokenWithModifiedPayload_shouldBeRejected() throws ParseException, JOSEException {
+            // Create a valid token
+            String validToken = createValidToken(PRIMARY_JWK_JSON, "person1@test.io");
+            String[] parts = validToken.split("\\.");
+            assertEquals(3, parts.length);
+
+            // Create a different payload (changing the subject to a different user)
+            // This simulates an attacker trying to change claims while keeping the signature
+            JWTClaimsSet maliciousClaims = new JWTClaimsSet.Builder()
+                    .subject("unity_admin@example.com")  // Attempt privilege escalation
+                    .issueTime(new Date())
+                    .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
+                    .claim("first_name", "Attacker")
+                    .claim("last_name", "User")
+                    .build();
+
+            // Base64url encode the malicious payload
+            String maliciousPayload = java.util.Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(maliciousClaims.toString().getBytes());
+
+            // Combine original header, malicious payload, and original signature
+            String modifiedToken = parts[0] + "." + maliciousPayload + "." + parts[2];
+
+            HttpRequest<?> request = HttpRequest.POST("/api/hasPermission",
+                            new HasPermissionRequest(1L, 1L, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
+                    .bearerAuth(modifiedToken);
+
+            // Token with modified payload should be rejected (signature won't match)
+            HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+                    client.toBlocking().exchange(request, AuthController.HasPermissionResponse.class));
+
+            assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus(),
+                    "Tokens with modified payload must be rejected - signature validation failed");
+        }
+
+        @Test
+        @DisplayName("Token with HS256 algorithm should be rejected - prevents algorithm confusion attack")
+        void tokenWithHS256Algorithm_shouldBeRejected() {
+            // Construct a token with alg:HS256 signed with the public key as secret
+            // This is a classic algorithm confusion attack where attacker uses RSA public key as HMAC secret
+            // Header: {"alg":"HS256","typ":"JWT"}
+            String header = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
+            // Payload with valid claims
+            String payload = "eyJzdWIiOiJwZXJzb24xQHRlc3QuaW8iLCJpYXQiOjE3MzU2MDAwMDAsImV4cCI6MTczNTY4NjQwMH0";
+            // Fake signature (would need actual public key to craft real attack)
+            String fakeSignature = "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+
+            String hs256Token = header + "." + payload + "." + fakeSignature;
+
+            HttpRequest<?> request = HttpRequest.POST("/api/hasPermission",
+                            new HasPermissionRequest(1L, 1L, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
+                    .bearerAuth(hs256Token);
+
+            // Server configured for RS256 should reject HS256 tokens
+            HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+                    client.toBlocking().exchange(request, AuthController.HasPermissionResponse.class));
+
+            assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus(),
+                    "Tokens with HS256 algorithm must be rejected when server is configured for RS256");
+        }
+
+        @Test
+        @DisplayName("Token with extremely long claims should be handled gracefully")
+        void tokenWithLongClaims_shouldBeHandledGracefully() throws ParseException, JOSEException {
+            RSAKey rsaKey = RSAKey.parse(PRIMARY_JWK_JSON);
+            JWSSigner signer = new RSASSASigner(rsaKey);
+
+            // Create a token with unusually long claim values
+            String longValue = "A".repeat(10000);
+
+            Instant now = Instant.now();
+            JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                    .subject("person1@test.io")
+                    .issueTime(Date.from(now))
+                    .expirationTime(Date.from(now.plusSeconds(3600)))
+                    .claim("first_name", longValue)
+                    .claim("last_name", "User")
+                    .build();
+
+            SignedJWT signedJWT = new SignedJWT(
+                    new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(rsaKey.getKeyID()).build(),
+                    claimsSet);
+            signedJWT.sign(signer);
+
+            String token = signedJWT.serialize();
+
+            HttpRequest<?> request = HttpRequest.POST("/api/hasPermission",
+                            new HasPermissionRequest(1L, 1L, List.of("AUTH_SERVICE_EDIT-SYSTEM")))
+                    .bearerAuth(token);
+
+            // Server should either accept (if claims are valid) or reject gracefully
+            // It should NOT crash or return 500
+            try {
+                HttpResponse<AuthController.HasPermissionResponse> response = client.toBlocking()
+                        .exchange(request, AuthController.HasPermissionResponse.class);
+                // If accepted, that's fine - the token is technically valid
+                assertEquals(HttpStatus.OK, response.getStatus());
+            } catch (HttpClientResponseException e) {
+                // If rejected, it should be a client error (4xx), not server error (5xx)
+                assertTrue(e.getStatus().getCode() < 500,
+                        "Server should handle long claims gracefully, not return 500. Got: " + e.getStatus());
+            }
+        }
     }
 
     // ==================== HELPER METHODS ====================
