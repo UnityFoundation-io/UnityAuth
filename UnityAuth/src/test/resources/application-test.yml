@@ -1,0 +1,19 @@
+# Test environment configuration
+# Enables CORS for testing preflight requests and origin validation
+micronaut:
+  application:
+    name: unity-iam
+  server:
+    cors:
+      enabled: true
+      configurations:
+        web:
+          allowed-origins-regex: '^http:\/\/(.*?)(?:localhost|127\.0\.0\.1)(?::\d+)?$'
+          allowedOrigins:
+            - http://localhost:3000
+            - http://localhost:3001
+            - http://127.0.0.1:3000
+            - http://127.0.0.1:3001
+      localhost-pass-through: true
+  security:
+    authentication: bearer

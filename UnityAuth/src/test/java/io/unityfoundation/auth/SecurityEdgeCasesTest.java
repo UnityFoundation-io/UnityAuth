@@ -24,7 +24,6 @@ import io.micronaut.security.authentication.UsernamePasswordCredentials;
 import io.micronaut.security.token.render.BearerAccessRefreshToken;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -318,7 +317,6 @@ class SecurityEdgeCasesTest {
     class CorsValidationTests {
 
         @Test
-        @Disabled("CORS not configured in test environment - enable when CORS test config is added")
         @DisplayName("CORS preflight request from allowed origin should succeed")
         void corsPreflightFromAllowedOrigin_shouldSucceed() {
             MutableHttpRequest<?> request = HttpRequest.OPTIONS("/api/login")
@@ -356,7 +354,6 @@ class SecurityEdgeCasesTest {
         }
 
         @Test
-        @Disabled("CORS not configured in test environment - enable when CORS test config is added")
         @DisplayName("CORS request from 127.0.0.1 should be allowed")
         void corsFrom127001_shouldBeAllowed() {
             MutableHttpRequest<?> request = HttpRequest.OPTIONS("/api/login")
@@ -392,7 +389,6 @@ class SecurityEdgeCasesTest {
         }
 
         @Test
-        @Disabled("CORS not configured in test environment - enable when CORS test config is added")
         @DisplayName("CORS headers should allow credentials")
         void corsHeaders_shouldAllowCredentials() {
             MutableHttpRequest<?> request = HttpRequest.OPTIONS("/api/login")
@@ -411,12 +407,11 @@ class SecurityEdgeCasesTest {
         }
 
         @Test
-        @Disabled("CORS not configured in test environment - enable when CORS test config is added")
         @DisplayName("CORS should allow common HTTP methods")
         void cors_shouldAllowCommonMethods() {
-            MutableHttpRequest<?> request = HttpRequest.OPTIONS("/api/users")
+            MutableHttpRequest<?> request = HttpRequest.OPTIONS("/api/login")
                     .header(HttpHeaders.ORIGIN, "http://localhost:3001")
-                    .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET");
+                    .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST");
 
             HttpResponse<?> response = client.toBlocking().exchange(request);
 
@@ -424,8 +419,8 @@ class SecurityEdgeCasesTest {
             String allowedMethods = response.getHeaders().get(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS);
             if (allowedMethods != null) {
                 // Common methods should be allowed
-                assertTrue(allowedMethods.contains("GET") || allowedMethods.contains("POST"),
-                        "Common HTTP methods should be allowed");
+                assertTrue(allowedMethods.contains("POST"),
+                        "POST method should be allowed for login endpoint");
             }
         }
     }
