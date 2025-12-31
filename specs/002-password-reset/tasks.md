@@ -100,7 +100,7 @@
 
 ### Password Reset Service - Request Flow
 
-- [ ] T027 [US1] Create PasswordResetService with requestPasswordReset method in UnityAuth/src/main/java/io/unityfoundation/auth/PasswordResetService.java (depends on T006, T007, T008, T009, T026)
+- [ ] T027 [US1] Create PasswordResetService with requestPasswordReset method in UnityAuth/src/main/java/io/unityfoundation/auth/PasswordResetService.java; handle EmailServiceException with generic "try again later" response (FR-017) (depends on T006, T007, T008, T009, T026)
 
 ### Controller - Request Endpoint
 
@@ -135,8 +135,8 @@
 
 ### Session Invalidation
 
-- [ ] T035 [US2] Update JWT token generation to include tokenVersion claim in existing authentication logic
-- [ ] T036 [US2] Update JWT validation to check tokenVersion matches user's current version
+- [ ] T035 [US2] Update JWT token generation to include tokenVersion claim in UnityAuth/src/main/java/io/unityfoundation/auth/JwtTokenGenerator.java (or equivalent token builder)
+- [ ] T036 [US2] Update JWT validation to check tokenVersion matches user's current version in UnityAuth/src/main/java/io/unityfoundation/auth/UserAuthenticationProvider.java (or equivalent authentication provider)
 
 **Checkpoint**: User Story 2 complete - users can reset their password using the token link
 
