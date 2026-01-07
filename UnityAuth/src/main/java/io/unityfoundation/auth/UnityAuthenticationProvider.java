@@ -59,7 +59,13 @@ public class UnityAuthenticationProvider implements ReactiveAuthenticationProvid
   @Override
   public @NonNull Publisher<AuthenticationResponse> authenticate(
       @NonNull AuthenticationRequest<Object, Object> authenticationRequest) {
-            return Mono.fromCallable(() -> findUser(authenticationRequest))
+    if (authenticationRequest.getIdentity() == null ||
+        authenticationRequest.getIdentity().toString().isEmpty() ||
+        authenticationRequest.getSecret() == null ||
+        authenticationRequest.getSecret().toString().isEmpty()) {
+      return Mono.just(AuthenticationResponse.failure(CREDENTIALS_DO_NOT_MATCH.toString()));
+    }
+    return Mono.fromCallable(() -> findUser(authenticationRequest))
         .subscribeOn(Schedulers.boundedElastic())
         .flatMap(user -> {
           AuthenticationFailed authenticationFailed = validate(user, authenticationRequest);

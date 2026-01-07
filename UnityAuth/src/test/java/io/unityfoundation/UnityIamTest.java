@@ -8,6 +8,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.security.authentication.UsernamePasswordCredentials;
 import io.micronaut.security.token.render.BearerAccessRefreshToken;
@@ -310,5 +311,23 @@ class UnityIamTest {
     assertEquals(HttpStatus.OK, rsp.getStatus());
     BearerAccessRefreshToken bearer = rsp.body();
     return bearer.getAccessToken();
+  }
+
+  @Test
+  void login_failsWithEmptyPassword() {
+    UsernamePasswordCredentials creds = new UsernamePasswordCredentials("person1@test.io", "");
+    HttpRequest<?> request = HttpRequest.POST("/api/login", creds);
+    HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+        client.toBlocking().exchange(request, BearerAccessRefreshToken.class));
+    assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
+  }
+
+  @Test
+  void login_failsWithEmptyUsername() {
+    UsernamePasswordCredentials creds = new UsernamePasswordCredentials("", "test");
+    HttpRequest<?> request = HttpRequest.POST("/api/login", creds);
+    HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+        client.toBlocking().exchange(request, BearerAccessRefreshToken.class));
+    assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
   }
 }
