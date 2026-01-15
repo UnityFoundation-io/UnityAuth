@@ -1,0 +1,648 @@
+# UnityAuth CLI Usability Recommendations
+
+**Date**: 2025-12-30
+**Status**: Draft - Pending spec update
+**Sources**: [clig.dev](https://clig.dev/), [Lucas Costa UX Patterns](https://lucasfcosta.com/2022/06/01/ux-patterns-cli-tools.html), [Evil Martians](https://evilmartians.com/chronicles/cli-ux-best-practices-3-patterns-for-improving-progress-displays)
+
+---
+
+## Priority 1 (High Impact, Implement First)
+
+### 1.1 Add Short Flag Aliases for Common Options
+
+**Problem**: Users must type full flag names, slowing common workflows.
+
+**Current**:
+```bash
+unityauth user list --tenant-id 1 --format json
+```
+
+**Proposed**:
+```bash
+unityauth user list -t 1 -o json
+```
+
+**Flag Mapping**:
+| Long Flag | Short Flag | Commands | Status |
+|-----------|------------|----------|--------|
+| `--tenant-id` | `-t` | user list, user create, user update, permissions list | ✅ Implemented |
+| `--format` | `-o` | All commands (global) | ✅ Implemented |
+| `--verbose` | `-v` | All commands (global) | ✅ Implemented |
+| `--role-ids` | `-r` | user create, user update | ✅ Implemented |
+| `--service-id` | `-s` | permissions list | ✅ Implemented |
+| `--email` | `-e` | user create, login | ⏸️ Deferred (infrequent use) |
+| `--first-name` | `-f` | user create, user update-profile | ⏸️ Deferred (infrequent use) |
+| `--last-name` | `-l` | user create, user update-profile | ⏸️ Deferred (infrequent use) |
+| `--password` | `-p` | user create, user update-profile | ⏸️ Deferred (security: prefer prompts) |
+
+**Implementation**: Add `short_flag` parameter to Click options.
+
+**Note**: Short flags were selectively added to the most frequently used options to avoid namespace pollution. Options like `--email`, `--first-name`, `--last-name`, and `--password` are typically only used once per command invocation and don't benefit as much from shorter typing. Additionally, `--password` is better handled via secure prompts than command-line flags.
+
+---
+
+### 1.2 Interactive Mode for Complex Commands
+
+**Problem**: `user create` requires 6 flags - easy to make mistakes.
+
+**Current**:
+```bash
+unityauth user create --email user@example.com --first-name John \
+  --last-name Doe --password MyP@ss123 --tenant-id 1 --role-ids "2"
+```
+
+**Proposed**: When run without required arguments AND stdin is a TTY, launch interactive wizard:
+```bash
+$ unityauth user create
+Email: user@example.com
+First name: John
+Last name: Doe
+Password: ********
+Select tenant:
+  [1] Production Tenant
+  [2] Development Tenant
+> 1
+Select roles (space to toggle, enter to confirm):
+  [ ] Unity Administrator
+  [x] Tenant Administrator
+  [x] Request Manager
+
+✓ User created successfully (ID: 42)
+```
+
+**Behavior**:
+- Interactive mode triggers when: no required args provided AND `sys.stdin.isatty()` is True
+- Non-interactive fallback: fail with usage message showing required flags
+- Password input uses `click.prompt(hide_input=True)`
+- Tenant/role selection fetches options from API dynamically
+
+**Commands to support**:
+- `user create` - Full wizard
+- `user update` - Role selection wizard
+- `login` - Email/password prompts (already partially implemented)
+
+---
+
+### 1.3 Add `whoami` Command
+
+**Problem**: `token-info` name is not intuitive for checking current identity.
+
+**Proposed**: Add `whoami` as an alias or standalone command:
+```bash
+$ unityauth whoami
+Logged in as: admin@example.com
+User ID: 5
+API: https://auth.example.com
+Token expires: 2025-12-31 14:30:00
+```
+
+**Implementation Options**:
+1. Add `whoami` as alias to `token-info`
+2. Add `whoami` as separate command with simpler output
+3. Keep both: `whoami` for quick check, `token-info` for full details
+
+**Recommendation**: Option 3 - keep both commands.
+
+---
+
+### 1.4 Allow Empty Role IDs to Remove All Roles
+
+**Problem**: The CLI prevents removing all roles from a user, but the backend supports it.
+
+**Backend behavior**: `PATCH /api/users/{id}/roles` accepts an empty `roles` array. The `UpdateUserRolesRequest` has no `@NotEmpty` validation on roles (unlike `AddUserRequest` which requires at least one role for user creation).
+
+**Current CLI validation** ([users.py:78-85](unityauth-cli/src/unityauth_cli/commands/users.py#L78-L85)):
+```python
+roles = [int(rid.strip()) for rid in role_ids.split(',')]
+if not roles:
+    raise ValidationError("At least one role ID must be provided")
+```
+
+**Proposed**: Allow empty value to remove all roles:
+```bash
+# Remove all roles from user 5 in tenant 1
+unityauth user update 5 -t 1 -r ""
+unityauth user update 5 -t 1 --role-ids ""
+
+# Or with explicit "none" keyword
+unityauth user update 5 -t 1 -r none
+```
+
+**Use case**: Soft-disable a user by removing all their roles in a tenant without deleting the user account. This preserves audit history and allows re-enabling later.
+
+**Implementation**:
+1. In `user update` command, check if `role_ids` is empty string or "none"
+2. If so, send empty `roles: []` array to API
+3. Add confirmation prompt: "This will remove all roles for user X in tenant Y. Continue? [y/N]"
+4. Skip confirmation with `--yes` flag
+
+**Files to modify**:
+- `commands/users.py` - Update validation logic in `update` command
+
+---
+
+## Priority 2 (Medium Impact)
+
+### 2.1 Add `--dry-run` Flag for Mutating Commands
+
+**Problem**: Users cannot preview changes before execution.
+
+**Proposed**:
+```bash
+$ unityauth user create --dry-run -e user@example.com -f John -l Doe \
+    -p MyP@ss123 -t 1 -r "2,3"
+
+[DRY RUN] Would create user:
+  Email: user@example.com
+  First Name: John
+  Last Name: Doe
+  Tenant ID: 1
+  Role IDs: 2, 3
+
+Run without --dry-run to execute.
+```
+
+**Commands to support**:
+- `user create`
+- `user update`
+- `user update-profile`
+- `batch create-users`
+
+**Implementation**: Add `--dry-run` / `-n` flag; skip API call and display planned action.
+
+---
+
+### 2.2 Add Typo Suggestions (Did You Mean?)
+
+**Problem**: Typos result in unhelpful "No such command" errors.
+
+**Current**:
+```bash
+$ unityauth usr list
+Error: No such command 'usr'.
+```
+
+**Proposed**:
+```bash
+$ unityauth usr list
+Error: No such command 'usr'.
+
+Did you mean one of these?
+  user
+```
+
+**Implementation**: Use `click-didyoumean` package or implement Levenshtein distance matching.
+
+---
+
+### 2.3 Add `unityauth init` Setup Wizard
+
+**Problem**: New users must manually figure out configuration.
+
+**Proposed**:
+```bash
+$ unityauth init
+Welcome to UnityAuth CLI!
+
+API URL: https://auth.example.com
+✓ Connection successful (API v1.0)
+✓ Configuration saved to ~/.config/unityauth-cli/config.yml
+
+Would you like to log in now? [Y/n]: y
+Email: admin@example.com
+Password: ********
+✓ Logged in as admin@example.com
+
+Setup complete! Try these commands:
+  unityauth tenant list          # List your tenants
+  unityauth user list -t 1       # List users in tenant 1
+  unityauth --help               # See all commands
+```
+
+**Behavior**:
+1. Prompt for API URL
+2. Test connection to API
+3. Save configuration
+4. Optionally trigger login flow
+5. Display next steps
+
+---
+
+### 2.4 Improve Empty State Messages
+
+**Problem**: Empty results don't guide users on next steps.
+
+**Current**:
+```
+⚠ No users found
+```
+
+**Proposed**:
+```
+No users found in tenant 1.
+
+To create a user:
+  unityauth user create -t 1 -e user@example.com ...
+
+To list users in a different tenant:
+  unityauth tenant list          # See available tenants
+  unityauth user list -t <ID>    # List users in that tenant
+```
+
+**Commands to update**:
+- `user list` - Suggest user create
+- `tenant list` - Explain permissions
+- `role list` - Explain what roles are for
+- `permissions list` - Explain permission model
+
+---
+
+## Priority 3 (Nice to Have)
+
+### 3.1 Support Name-Based Lookups
+
+**Problem**: Users must look up IDs before running commands.
+
+**Current workflow**:
+```bash
+unityauth tenant list              # Find tenant ID = 1
+unityauth role list                # Find role ID = 2
+unityauth user create --tenant-id 1 --role-ids "2" ...
+```
+
+**Proposed**: Allow names as alternative to IDs:
+```bash
+unityauth user create --tenant "Production" --roles "Admin,Manager" ...
+```
+
+**Implementation**:
+- Accept both ID (integer) and name (string) for tenant/role parameters
+- Perform API lookup to resolve name to ID
+- Cache results for session to avoid repeated lookups
+- Error if name is ambiguous or not found
+
+---
+
+### 3.2 Add Command Aliases
+
+**Problem**: Common operations require typing full command paths.
+
+**Proposed Aliases**:
+| Full Command | Alias |
+|--------------|-------|
+| `unityauth user list` | `unityauth users` |
+| `unityauth tenant list` | `unityauth tenants` |
+| `unityauth role list` | `unityauth roles` |
+| `unityauth permissions list` | `unityauth perms` |
+| `unityauth token-info` | `unityauth whoami` |
+
+**Implementation**: Register additional commands that delegate to originals.
+
+---
+
+### 3.3 Add `--quiet` / `-q` Flag for Scripting
+
+**Problem**: Success messages interfere with output parsing in scripts.
+
+**Current**:
+```bash
+$ unityauth user create ...
+✓ User created successfully (ID: 42)
+```
+
+**Proposed with `--quiet`**:
+```bash
+$ unityauth user create --quiet ...
+42
+```
+
+**Behavior**:
+- Suppress all non-error output
+- Return only essential data (IDs, counts)
+- Useful for scripting: `USER_ID=$(unityauth user create -q ...)`
+
+**Implementation**: Add global `--quiet` / `-q` flag; check before printing success/info messages.
+
+---
+
+### 3.4 Group Commands in Help Output
+
+**Problem**: Help shows commands alphabetically, not by function.
+
+**Current**:
+```
+Commands:
+  config      Configuration management commands.
+  login       Authenticate with UnityAuth API.
+  logout      Clear stored authentication token.
+  permissions Permission discovery and verification...
+  role        Role discovery commands.
+  tenant      Tenant discovery and management commands.
+  token-info  Display information about current...
+  user        User account management commands.
+```
+
+**Proposed**:
+```
+Authentication:
+  login       Authenticate with UnityAuth API
+  logout      Clear stored authentication token
+  whoami      Display current user info
+
+User Management:
+  user        User account management commands
+
+Discovery:
+  tenant      Tenant discovery commands
+  role        Role discovery commands
+  permissions Permission verification commands
+
+Configuration:
+  config      Configuration management commands
+
+Run 'unityauth COMMAND --help' for more information.
+```
+
+**Implementation**: Use Click's command grouping or custom help formatter.
+
+---
+
+### 3.5 Add Confirmation for Destructive Actions
+
+**Problem**: Role updates execute immediately without confirmation.
+
+**Proposed**:
+```bash
+$ unityauth user update 5 -t 1 -r "1"
+This will replace all roles for user john@example.com in tenant Production.
+
+Current roles: Admin, Manager, Viewer
+New roles: Admin
+
+Continue? [y/N]: y
+✓ User 5 roles updated successfully
+```
+
+**Behavior**:
+- Fetch current state before modification
+- Show diff of changes
+- Require explicit confirmation
+- Add `--yes` / `-y` flag to skip confirmation for automation
+
+**Commands to add confirmation**:
+- `user update` (role changes)
+- `batch create-users` (bulk operations)
+
+---
+
+### 3.6 Better Progress Feedback for Batch Operations
+
+**Problem**: Long batch operations appear to hang.
+
+**Proposed**: Use Rich progress bars:
+```bash
+$ unityauth batch create-users users.csv
+Validating CSV... ✓ 100 records found
+
+Creating users ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45/100 • 00:23 remaining
+
+Summary:
+  ✓ 98 users created successfully
+  ✗ 2 users failed (see errors below)
+
+Errors:
+  Row 23: duplicate@example.com - User already exists
+  Row 67: invalid email format
+```
+
+**Implementation**: Use `rich.progress.Progress` for batch operations.
+
+---
+
+## Priority 4 (Documentation)
+
+### 4.1 Document `--dry-run` Flag
+
+**Problem**: The `--dry-run` / `-n` flag was implemented but not documented in the user guide.
+
+**Affected Commands**:
+- `user create --dry-run`
+- `user update --dry-run`
+- `user update-profile --dry-run`
+
+**Files to Update**:
+- `docs/user-guide.md` - Add `--dry-run` option to each command's options table and examples
+
+**Documentation to Add** (example for `user create`):
+
+```markdown
+**Optional Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--dry-run`, `-n` | Preview changes without executing |
+
+**Examples:**
+
+\`\`\`bash
+# Preview user creation without actually creating
+unityauth user create --dry-run \
+  --email user@example.com \
+  --first-name John \
+  --last-name Doe \
+  --password "SecureP@ss123" \
+  --tenant-id 1 \
+  --role-ids "2,3"
+\`\`\`
+```
+
+---
+
+### 4.2 Document All Configuration Keys
+
+**Problem**: The `config set` documentation only lists 3 keys but the implementation supports 10+.
+
+**Current Documentation** (`docs/user-guide.md:273-280`):
+- `api_url`, `default_format`, `timeout`
+
+**Missing Keys** (from `config.py:23-38`):
+- `api_version` - API version compatibility
+- `batch.max_size` - Maximum batch operation size
+- `batch.continue_on_error` - Continue on errors in batch mode
+- `batch.delay_ms` - Delay between batch API calls
+- `output.show_headers` - Show table headers
+- `output.table_style` - Table style (grid, simple, etc.)
+- `output.color_enabled` - Enable colored output
+
+**Files to Update**:
+- `docs/user-guide.md` - Expand config set Available Keys table
+
+**Documentation to Add**:
+
+```markdown
+**Available Keys:**
+
+| Key | Description | Default | Example |
+|-----|-------------|---------|---------|
+| `api_url` | UnityAuth API endpoint | `null` | `https://auth.example.com` |
+| `api_version` | API version for compatibility | `1.0` | `1.0` |
+| `default_format` | Default output format | `table` | `table`, `json`, `csv` |
+| `timeout` | Request timeout in seconds | `30` | `60` |
+| `batch.max_size` | Max records per batch operation | `1000` | `500` |
+| `batch.continue_on_error` | Continue batch on errors | `true` | `false` |
+| `batch.delay_ms` | Delay between batch calls (ms) | `0` | `100` |
+| `output.show_headers` | Show table headers | `true` | `false` |
+| `output.table_style` | Table formatting style | `grid` | `simple`, `plain` |
+| `output.color_enabled` | Enable colored output | `true` | `false` |
+
+**Examples:**
+
+\`\`\`bash
+# Set nested configuration using dot notation
+unityauth config set batch.max_size 500
+unityauth config set output.color_enabled false
+\`\`\`
+```
+
+---
+
+### 4.3 Add `init` to README Command Structure
+
+**Problem**: The README command structure tree omits the `init` command.
+
+**File to Update**: `README.md`
+
+**Current** (line 117-138):
+```
+unityauth
+├── login
+├── logout
+...
+```
+
+**Proposed**:
+```
+unityauth
+├── init           # First-time setup wizard
+├── login          # Authenticate with UnityAuth
+├── logout         # Remove stored credentials
+...
+```
+
+---
+
+### 4.4 Add Installation Reference to User Guide
+
+**Problem**: User guide has no installation instructions; users must find README first.
+
+**File to Update**: `docs/user-guide.md`
+
+**Proposed**: Add after the title/intro:
+
+```markdown
+## Installation
+
+See the [README](../README.md#installation) for installation instructions.
+
+**Quick Install:**
+\`\`\`bash
+cd unityauth-cli
+python3 -m venv venv
+source venv/bin/activate
+python3 -m pip install -e .
+\`\`\`
+```
+
+---
+
+### 4.5 Add Quick Start to User Guide
+
+**Problem**: User guide jumps straight into detailed command reference without a quick orientation.
+
+**File to Update**: `docs/user-guide.md`
+
+**Proposed**: Add after Installation section:
+
+```markdown
+## Quick Start
+
+\`\`\`bash
+# 1. First-time setup
+unityauth init
+
+# 2. Or configure manually and login
+unityauth config set api_url https://auth.example.com
+unityauth login
+
+# 3. Explore
+unityauth tenant list
+unityauth role list
+unityauth user list --tenant-id 1
+\`\`\`
+
+For detailed command reference, see the sections below.
+```
+
+---
+
+## Implementation Checklist
+
+### Phase 1: Quick Wins (P1)
+- [x] Add short flags to common commands (`-t`, `-o`, `-v`, `-r`, `-s`)
+- [ ] Add `whoami` command
+- [x] Add interactive mode detection (`sys.stdin.isatty()`) - Implemented in login.py and init.py
+- [ ] Implement interactive wizard for `user create`
+- [ ] Allow empty `--role-ids` to remove all roles from user
+
+### Phase 2: Enhanced UX (P2)
+- [x] Add `--dry-run` flag to mutating commands (user create, update, update-profile)
+- [ ] Add typo suggestions with `click-didyoumean`
+- [x] Create `unityauth init` setup wizard
+- [ ] Improve empty state messages with next steps
+
+### Phase 3: Polish (P3)
+- [ ] Support name-based tenant/role lookups
+- [ ] Add command aliases
+- [ ] Add `--quiet` flag for scripting
+- [ ] Reorganize help output by category
+- [ ] Add confirmation prompts for destructive actions
+- [ ] Add Rich progress bars for batch operations (blocked: batch not implemented)
+
+### Phase 4: Documentation (P4)
+- [x] Document `--dry-run` flag in user guide (user create/update/update-profile)
+- [ ] Document all configuration keys in user guide (config set section)
+- [ ] Add `init` command to README command structure tree
+- [ ] Add installation reference to user guide
+- [ ] Add quick start section to user guide
+
+**Status**: See [implementation-status.md](implementation-status.md) for full spec compliance matrix.
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `cli.py` | Add `-v` short flag, `--quiet` global flag, help formatting |
+| `commands/login.py` | Add `-e` short flag, `whoami` command |
+| `commands/users.py` | Add short flags, interactive mode, `--dry-run`, confirmation |
+| `commands/tenants.py` | Add short flags, name-based lookup |
+| `commands/roles.py` | Add short flags |
+| `commands/permissions.py` | Add `-t`, `-s` short flags |
+| `commands/config.py` | Add `init` command |
+| `commands/batch.py` | Add `--dry-run`, Rich progress bars |
+| `utils/interactive.py` | New file for interactive prompts |
+| `pyproject.toml` | Add `click-didyoumean` dependency |
+| `docs/user-guide.md` | Add `--dry-run` docs, config keys, installation, quick start |
+| `README.md` | Add `init` to command structure tree |
+
+---
+
+## Dependencies to Add
+
+```toml
+[project.dependencies]
+click-didyoumean = "^0.3.0"  # Typo suggestions
+```
+
+Note: `rich` is already included for styled output.

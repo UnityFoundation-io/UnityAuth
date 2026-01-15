@@ -1,0 +1,600 @@
+# UnityAuth CLI Command Specifications
+# Feature: 001-unityauth-cli
+# Date: 2025-12-26
+# Version: 1.0.0
+
+# This file defines the complete command-line interface contract for the UnityAuth CLI.
+# It serves as the source of truth for command structure, arguments, options, and behavior.
+
+version: "1.0.0"
+cli_name: "unityauth"
+description: "Command-line interface for UnityAuth administrative operations"
+
+global_options:
+  - name: "--api-url"
+    type: string
+    required: false
+    description: "UnityAuth API endpoint URL (overrides config file)"
+    env_var: "UNITYAUTH_API_URL"
+    example: "https://auth.example.com"
+
+  - name: "--format"
+    type: choice
+    choices: ["table", "json", "csv"]
+    default: "table"
+    description: "Output format for command results"
+    env_var: "UNITYAUTH_FORMAT"
+
+  - name: "--verbose"
+    type: flag
+    default: false
+    description: "Enable verbose debug output"
+    short: "-v"
+
+  - name: "--help"
+    type: flag
+    description: "Show help message and exit"
+    short: "-h"
+
+  - name: "--version"
+    type: flag
+    description: "Show CLI version and exit"
+
+commands:
+  # =============================================================================
+  # Authentication Commands
+  # =============================================================================
+
+  - name: "login"
+    description: "Authenticate with UnityAuth and store credentials"
+    priority: "P1"
+    functional_requirements: ["FR-001", "FR-002"]
+    arguments: []
+    options:
+      - name: "--email"
+        type: string
+        required: false  # Will prompt if not provided in interactive mode
+        description: "User email address"
+        validation: "Valid email format"
+        env_var: "UNITYAUTH_EMAIL"
+
+      - name: "--password"
+        type: string
+        required: false  # Will prompt if not provided in interactive mode
+        description: "User password"
+        validation: "Not blank"
+        env_var: "UNITYAUTH_PASSWORD"
+        sensitive: true  # Hide in logs/output
+
+    behavior:
+      - "If email/password not provided, prompt interactively (if TTY)"
+      - "In non-interactive mode (no TTY), require --email and --password"
+      - "Send POST /api/login with credentials"
+      - "On success, store JWT token in OS keyring"
+      - "Display success message with user email"
+      - "Exit code 0 on success, 2 on auth failure"
+
+    examples:
+      - command: "unityauth login --email admin@example.com --password secret"
+        description: "Non-interactive login with credentials"
+
+      - command: "unityauth login"
+        description: "Interactive login (will prompt for email and password)"
+
+      - command: "UNITYAUTH_EMAIL=admin@example.com UNITYAUTH_PASSWORD=secret unityauth login"
+        description: "Login using environment variables"
+
+    output:
+      success: "✓ Login successful as {email}"
+      error: "✗ Authentication failed: {error_message}"
+
+  # ---------------------------------------------------------------------------
+
+  - name: "logout"
+    description: "Remove stored credentials and end session"
+    priority: "P1"
+    functional_requirements: ["FR-022"]
+    arguments: []
+    options: []
+    behavior:
+      - "Delete JWT token from OS keyring"
+      - "Send GET /api/logout to invalidate server-side session"
+      - "Display confirmation message"
+      - "Exit code 0 on success"
+
+    examples:
+      - command: "unityauth logout"
+        description: "Log out and remove stored credentials"
+
+    output:
+      success: "✓ Logged out successfully"
+      error: "✗ Logout failed: {error_message}"
+
+  # ---------------------------------------------------------------------------
+
+  - name: "token-info"
+    description: "Display information about current authentication token"
+    priority: "P1"
+    functional_requirements: ["FR-021"]
+    arguments: []
+    options: []
+    behavior:
+      - "Retrieve token from keyring"
+      - "Send GET /api/token_info"
+      - "Display token metadata (not the token itself)"
+      - "Shows: user email, expiration, API version, permissions summary"
+
+    examples:
+      - command: "unityauth token-info"
+        description: "Show current token information"
+
+    output:
+      format: "table"
+      fields:
+        - "User Email"
+        - "Token Expires"
+        - "API Version"
+        - "Authenticated"
+
+  # =============================================================================
+  # Configuration Commands
+  # =============================================================================
+
+  - name: "config show"
+    description: "Display current CLI configuration"
+    arguments: []
+    options: []
+    behavior:
+      - "Load configuration from file"
+      - "Display all settings in table format"
+      - "Indicate which settings are from config file vs defaults"
+
+    examples:
+      - command: "unityauth config show"
+        description: "Show current configuration"
+
+  # ---------------------------------------------------------------------------
+
+  - name: "config set"
+    description: "Set a configuration value"
+    arguments:
+      - name: "KEY"
+        type: string
+        required: true
+        description: "Configuration key to set"
+        valid_keys: ["api_url", "default_format", "timeout", "batch.max_size", "batch.continue_on_error"]
+
+      - name: "VALUE"
+        type: string
+        required: true
+        description: "Value to set"
+
+    options: []
+    behavior:
+      - "Validate KEY is a recognized configuration option"
+      - "Validate VALUE matches expected type for KEY"
+      - "Update configuration file"
+      - "Display confirmation"
+
+    examples:
+      - command: "unityauth config set api_url https://auth.example.com"
+        description: "Set API endpoint URL"
+
+      - command: "unityauth config set default_format json"
+        description: "Change default output format to JSON"
+
+  # ---------------------------------------------------------------------------
+
+  - name: "config edit"
+    description: "Open configuration file in default text editor"
+    arguments: []
+    options: []
+    behavior:
+      - "Detect default editor from $EDITOR or $VISUAL"
+      - "Open config file in editor"
+      - "Wait for editor to close"
+      - "Validate config file after edits"
+
+    examples:
+      - command: "unityauth config edit"
+        description: "Edit configuration file interactively"
+
+  # =============================================================================
+  # User Management Commands
+  # =============================================================================
+
+  - name: "user create"
+    description: "Create a new user account"
+    priority: "P2"
+    functional_requirements: ["FR-004"]
+    arguments: []
+    options:
+      - name: "--email"
+        type: string
+        required: true
+        description: "User email address"
+        validation: "Valid email format"
+
+      - name: "--first-name"
+        type: string
+        required: true
+        description: "User first name"
+        validation: "Not blank, max 100 characters"
+
+      - name: "--last-name"
+        type: string
+        required: true
+        description: "User last name"
+        validation: "Not blank, max 100 characters"
+
+      - name: "--password"
+        type: string
+        required: true
+        description: "Initial password"
+        validation: "Min 8 characters"
+        sensitive: true
+
+      - name: "--tenant-id"
+        type: integer
+        required: true
+        description: "Tenant ID to assign user to"
+        validation: "Positive integer"
+
+      - name: "--role-ids"
+        type: string
+        required: true
+        description: "Comma-separated role IDs to assign"
+        validation: "Comma-separated integers"
+
+    behavior:
+      - "Validate all input parameters"
+      - "Send POST /api/users with user data"
+      - "Display created user information"
+      - "Exit code 0 on success, 1 on validation error, 3 on permission error"
+
+    examples:
+      - command: "unityauth user create --email user@example.com --first-name John --last-name Doe --password MyP@ss123 --tenant-id 1 --role-ids 2,3"
+        description: "Create new user with specified attributes"
+
+    output:
+      success: "✓ User created successfully (ID: {user_id})"
+      error: "✗ Failed to create user: {error_message}"
+
+  # ---------------------------------------------------------------------------
+
+  - name: "user update"
+    description: "Update user role assignments for a tenant"
+    priority: "P2"
+    functional_requirements: ["FR-005"]
+    arguments:
+      - name: "USER_ID"
+        type: integer
+        required: true
+        description: "ID of user to update"
+
+    options:
+      - name: "--tenant-id"
+        type: integer
+        required: true
+        description: "Tenant ID for role update"
+
+      - name: "--role-ids"
+        type: string
+        required: true
+        description: "Comma-separated role IDs (empty to remove all roles)"
+
+    behavior:
+      - "Send PATCH /api/users/{id}/roles"
+      - "Update roles for specified tenant only"
+      - "Display updated user information"
+
+    examples:
+      - command: "unityauth user update 5 --tenant-id 1 --role-ids 2,3"
+        description: "Update user 5's roles in tenant 1"
+
+      - command: "unityauth user update 5 --tenant-id 1 --role-ids ''"
+        description: "Remove all roles from user 5 in tenant 1"
+
+  # ---------------------------------------------------------------------------
+
+  - name: "user list"
+    description: "List users for a specific tenant"
+    priority: "P2"
+    functional_requirements: ["FR-008"]
+    arguments: []
+    options:
+      - name: "--tenant-id"
+        type: integer
+        required: true
+        description: "Tenant ID to list users for"
+
+    behavior:
+      - "Send GET /api/tenants/{id}/users"
+      - "Display user list in selected format (table/json/csv)"
+      - "Table columns: ID, Email, First Name, Last Name, Roles"
+
+    examples:
+      - command: "unityauth user list --tenant-id 1"
+        description: "List all users in tenant 1 (table format)"
+
+      - command: "unityauth user list --tenant-id 1 --format json"
+        description: "List users in JSON format"
+
+  # =============================================================================
+  # Tenant Commands
+  # =============================================================================
+
+  - name: "tenant list"
+    description: "List accessible tenants"
+    priority: "P3"
+    functional_requirements: ["FR-007"]
+    arguments: []
+    options: []
+    behavior:
+      - "Send GET /api/tenants"
+      - "Unity admins see all tenants"
+      - "Other users see only their assigned tenants"
+      - "Display tenant list in selected format"
+
+    examples:
+      - command: "unityauth tenant list"
+        description: "List all accessible tenants"
+
+  # ---------------------------------------------------------------------------
+
+  - name: "tenant users"
+    description: "List users in a specific tenant"
+    priority: "P3"
+    functional_requirements: ["FR-008"]
+    arguments:
+      - name: "TENANT_ID"
+        type: integer
+        required: true
+        description: "Tenant ID to list users for"
+
+    options: []
+    behavior:
+      - "Send GET /api/tenants/{id}/users"
+      - "Display user list for tenant"
+
+    examples:
+      - command: "unityauth tenant users 1"
+        description: "List all users in tenant 1"
+
+  # =============================================================================
+  # Role Commands
+  # =============================================================================
+
+  - name: "role list"
+    description: "List all available roles in the system"
+    priority: "P3"
+    functional_requirements: ["FR-009"]
+    arguments: []
+    options: []
+    behavior:
+      - "Send GET /api/roles"
+      - "Display roles with ID, name, and description"
+
+    examples:
+      - command: "unityauth role list"
+        description: "List all available roles"
+
+  # =============================================================================
+  # Permission Commands
+  # =============================================================================
+
+  - name: "permission get"
+    description: "Get all permissions for a user in a tenant/service context"
+    priority: "P4"
+    functional_requirements: ["FR-010"]
+    arguments: []
+    options:
+      - name: "--tenant-id"
+        type: integer
+        required: true
+        description: "Tenant ID"
+
+      - name: "--service-id"
+        type: integer
+        required: true
+        description: "Service ID"
+
+    behavior:
+      - "Send POST /api/principal/permissions"
+      - "Display list of permission strings"
+      - "Shows current authenticated user's permissions"
+
+    examples:
+      - command: "unityauth permission get --tenant-id 1 --service-id 1"
+        description: "Get current user's permissions for tenant 1, service 1"
+
+  # ---------------------------------------------------------------------------
+
+  - name: "permission check"
+    description: "Check if user has specific permissions"
+    priority: "P4"
+    functional_requirements: ["FR-011"]
+    arguments: []
+    options:
+      - name: "--tenant-id"
+        type: integer
+        required: true
+        description: "Tenant ID"
+
+      - name: "--service-id"
+        type: integer
+        required: true
+        description: "Service ID"
+
+      - name: "--permissions"
+        type: string
+        required: true
+        description: "Comma-separated permission strings to check"
+
+    behavior:
+      - "Send POST /api/hasPermission"
+      - "Display boolean result for each permission"
+      - "Exit code 0 if all permissions present, 1 if any missing"
+
+    examples:
+      - command: "unityauth permission check --tenant-id 1 --service-id 1 --permissions AUTH_SERVICE_VIEW-SYSTEM,AUTH_SERVICE_EDIT-TENANT"
+        description: "Check if user has specified permissions"
+
+  # =============================================================================
+  # Batch Operations
+  # =============================================================================
+
+  - name: "batch create-users"
+    description: "Create multiple users from CSV file"
+    priority: "P5"
+    functional_requirements: ["FR-014", "FR-019"]
+    arguments:
+      - name: "FILE"
+        type: path
+        required: true
+        description: "Path to CSV file with user records"
+
+    options:
+      - name: "--dry-run"
+        type: flag
+        default: false
+        description: "Validate and preview without creating users"
+
+      - name: "--continue-on-error"
+        type: flag
+        default: true
+        description: "Continue processing if individual records fail"
+
+      - name: "--delay"
+        type: integer
+        default: 0
+        description: "Delay in milliseconds between API requests"
+
+    csv_schema:
+      required_columns:
+        - "email"
+        - "firstName"
+        - "lastName"
+        - "password"
+        - "tenantId"
+      optional_columns:
+        - "roleIds"  # Pipe-separated: "1|2|3"
+        - "status"   # ENABLED or DISABLED
+
+    behavior:
+      - "Validate CSV file exists and is readable"
+      - "Validate header row matches expected schema"
+      - "Validate all rows before processing (fail-fast on schema errors)"
+      - "If --dry-run, display what would be created and exit"
+      - "Process rows sequentially, one POST /api/users per row"
+      - "If --continue-on-error, log failures but continue"
+      - "Otherwise, stop on first failure"
+      - "Display summary: total, created, failed"
+
+    examples:
+      - command: "unityauth batch create-users users.csv"
+        description: "Create users from CSV file"
+
+      - command: "unityauth batch create-users users.csv --dry-run"
+        description: "Preview batch operation without creating users"
+
+      - command: "unityauth batch create-users users.csv --delay 100"
+        description: "Add 100ms delay between requests (for rate limiting)"
+
+    output:
+      progress: "Processing row {current}/{total}..."
+      success: "✓ Created {count} users successfully"
+      partial: "⚠ Created {success} users, {failed} failed (see errors above)"
+      error: "✗ Batch operation failed: {error_message}"
+
+# =============================================================================
+# Exit Codes
+# =============================================================================
+
+exit_codes:
+  0:
+    name: "SUCCESS"
+    description: "Command completed successfully"
+
+  1:
+    name: "GENERAL_ERROR"
+    description: "Validation error, network error, or API error"
+
+  2:
+    name: "AUTHENTICATION_ERROR"
+    description: "Invalid credentials or expired token"
+
+  3:
+    name: "PERMISSION_ERROR"
+    description: "Insufficient privileges for operation"
+
+  4:
+    name: "CONFIGURATION_ERROR"
+    description: "Missing or invalid configuration"
+
+# =============================================================================
+# API Endpoint Mappings
+# =============================================================================
+
+api_endpoints:
+  login:
+    method: POST
+    path: "/api/login"
+    request_body:
+      email: string
+      password: string
+    response:
+      access_token: string
+
+  logout:
+    method: GET
+    path: "/api/logout"
+
+  token_info:
+    method: GET
+    path: "/api/token_info"
+
+  user_create:
+    method: POST
+    path: "/api/users"
+    request_body:
+      email: string
+      firstName: string
+      lastName: string
+      password: string
+      tenantId: integer
+      roles: [integer]
+
+  user_update_roles:
+    method: PATCH
+    path: "/api/users/{id}/roles"
+    request_body:
+      tenantId: integer
+      roles: [integer]
+
+  tenant_list:
+    method: GET
+    path: "/api/tenants"
+
+  tenant_users:
+    method: GET
+    path: "/api/tenants/{id}/users"
+
+  role_list:
+    method: GET
+    path: "/api/roles"
+
+  permission_get:
+    method: POST
+    path: "/api/principal/permissions"
+    request_body:
+      tenantId: integer
+      serviceId: integer
+
+  permission_check:
+    method: POST
+    path: "/api/hasPermission"
+    request_body:
+      tenantId: integer
+      serviceId: integer
+      permissions: [string]
