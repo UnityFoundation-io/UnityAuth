@@ -52,6 +52,15 @@ java {
 }
 
 graalvmNative.toolchainDetection = false
+
+tasks.withType(io.micronaut.gradle.docker.MicronautDockerfile).configureEach {
+  useCopyLink = false
+}
+
+tasks.withType(io.micronaut.gradle.docker.NativeImageDockerfile).configureEach {
+  useCopyLink = false
+}
+
 micronaut {
   runtime("netty")
   testRuntime("junit5")
