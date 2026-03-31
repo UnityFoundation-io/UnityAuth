@@ -46,10 +46,6 @@ dependencies {
 application {
   mainClass.set("io.unityfoundation.Application")
 }
-java {
-  sourceCompatibility = JavaVersion.toVersion("21")
-  targetCompatibility = JavaVersion.toVersion("21")
-}
 
 graalvmNative.toolchainDetection = false
 

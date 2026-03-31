@@ -16,6 +16,9 @@ micronaut:
         access:
           - isAnonymous()
     authentication: bearer
+unity:
+  auth:
+    internal-token: ${UNITY_AUTH_INTERNAL_TOKEN:unity-internal-secret}
   server:
     cors:
       enabled: true

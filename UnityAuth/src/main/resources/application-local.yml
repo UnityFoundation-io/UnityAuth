@@ -22,6 +22,9 @@ micronaut:
     port: 9090
   security:
     authentication: bearer
+unity:
+  auth:
+    internal-token: unity-internal-secret
 datasources:
   default:
     url: jdbc:mysql://localhost:13306/test?allowPublicKeyRetrieval=true&useSSL=false
