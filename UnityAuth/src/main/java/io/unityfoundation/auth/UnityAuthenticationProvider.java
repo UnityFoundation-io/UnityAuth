@@ -16,6 +16,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -68,6 +69,7 @@ public class UnityAuthenticationProvider implements ReactiveAuthenticationProvid
           } else {
             return Mono.just(AuthenticationResponse.success(
                     (String) authenticationRequest.getIdentity(),
+                    List.of("USER"),
                     Map.of(
                             "first_name", Objects.toString(user.getFirstName(), ""),
                             "last_name", Objects.toString(user.getLastName(), "")

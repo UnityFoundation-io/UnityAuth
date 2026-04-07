@@ -1,13 +1,10 @@
 package io.unityfoundation.auth;
 
-import io.micronaut.context.annotation.Value;
-import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.security.annotation.Secured;
-import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.serde.annotation.Serdeable;
 import io.unityfoundation.auth.entities.PasswordResetToken;
 import io.unityfoundation.auth.entities.PasswordResetTokenRepo;
@@ -16,23 +13,23 @@ import io.unityfoundation.auth.entities.UserRepo;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HexFormat;
 import java.util.Optional;
 import java.util.UUID;
 
-@Secured(SecurityRule.IS_ANONYMOUS)
+@Secured("INTERNAL_SERVICE")
 @Controller("/api/password-reset")
 public class PasswordResetController {
 
     private final UserRepo userRepo;
     private final PasswordResetTokenRepo tokenRepo;
     private final PasswordEncoder passwordEncoder;
-
-    @Value("${unity.auth.internal-token}")
-    protected String internalToken;
 
     public PasswordResetController(UserRepo userRepo, PasswordResetTokenRepo tokenRepo, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
@@ -41,42 +38,30 @@ public class PasswordResetController {
     }
 
     @Post("/generate")
-    public HttpResponse<GenerateTokenResponse> generateToken(@Body @Valid GenerateTokenRequest request, HttpRequest<?> httpRequest) {
-        String authHeader = httpRequest.getHeaders().get("X-Unity-Auth-Internal");
-        if (internalToken == null || !internalToken.equals(authHeader)) {
-            return HttpResponse.status(HttpStatus.FORBIDDEN);
-        }
-
+    public HttpResponse<GenerateTokenResponse> generateToken(@Body @Valid GenerateTokenRequest request) {
         Optional<User> userOptional = userRepo.findByEmail(request.email());
         if (userOptional.isEmpty()) {
-            // We return 200 even if user not found for security reasons in public APIs, 
-            // but this is an internal API so we can be more explicit if we want.
-            // Let's stay explicit for internal use.
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
         User user = userOptional.get();
         tokenRepo.deleteByUserId(user.getId());
 
+        String rawToken = UUID.randomUUID().toString();
         PasswordResetToken token = new PasswordResetToken();
-        token.setToken(UUID.randomUUID().toString());
+        token.setToken(sha256(rawToken));
         token.setUserId(user.getId());
         token.setExpiry(Instant.now().plus(1, ChronoUnit.HOURS));
         tokenRepo.save(token);
 
-        return HttpResponse.ok(new GenerateTokenResponse(token.getToken()));
+        return HttpResponse.ok(new GenerateTokenResponse(rawToken));
     }
 
     @Post("/reset")
     @Transactional
-    public HttpResponse<?> resetPassword(@Body @Valid ResetPasswordRequest request, HttpRequest<?> httpRequest) {
-        String authHeader = httpRequest.getHeaders().get("X-Unity-Auth-Internal");
-        if (internalToken == null || !internalToken.equals(authHeader)) {
-            return HttpResponse.status(HttpStatus.FORBIDDEN);
-        }
+    public HttpResponse<?> resetPassword(@Body @Valid ResetPasswordRequest request) {
+        Optional<PasswordResetToken> tokenOptional = tokenRepo.findByToken(sha256(request.token()));
 
-        Optional<PasswordResetToken> tokenOptional = tokenRepo.findByToken(request.token());
-        
         if (tokenOptional.isEmpty()) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Invalid token");
         }
@@ -99,6 +84,15 @@ public class PasswordResetController {
         tokenRepo.delete(token);
 
         return HttpResponse.ok();
+    }
+
+    private static String sha256(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(input.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Serdeable

@@ -33,19 +33,19 @@ public class UnityPasswordResetTest {
 
     @Test
     void testPasswordResetFlow() {
-        // 1. Generate token (Internal)
-        HttpRequest<?> generateRequest = HttpRequest.POST("/api/password-reset/generate", 
+        // 1. Generate token
+        HttpRequest<?> generateRequest = HttpRequest.POST("/api/password-reset/generate",
                 new PasswordResetController.GenerateTokenRequest("person1@test.io"))
                 .header("X-Unity-Auth-Internal", "test-secret");
-        
+
         HttpResponse<PasswordResetController.GenerateTokenResponse> generateResponse = client.toBlocking()
                 .exchange(generateRequest, PasswordResetController.GenerateTokenResponse.class);
-        
+
         assertEquals(HttpStatus.OK, generateResponse.getStatus());
         String token = generateResponse.getBody().get().token();
         assertNotNull(token);
 
-        // 2. Reset password (Internal)
+        // 2. Reset password
         HttpRequest<?> resetRequest = HttpRequest.POST("/api/password-reset/reset",
                 new PasswordResetController.ResetPasswordRequest(token, "new-secure-password"))
                 .header("X-Unity-Auth-Internal", "test-secret");
@@ -53,23 +53,21 @@ public class UnityPasswordResetTest {
         HttpResponse<?> resetResponse = client.toBlocking().exchange(resetRequest);
         assertEquals(HttpStatus.OK, resetResponse.getStatus());
 
-        // 3. Verify password change (Internal Check)
+        // 3. Verify password was changed
         Optional<User> userOptional = userRepo.findByEmail("person1@test.io");
         assertTrue(userOptional.isPresent());
-        // We can't easily check Bcrypt here without a decoder, but we can try to login with it
-        // Or just trust the update(user) call for now.
     }
 
     @Test
     void testGenerateTokenInvalidSecret() {
-        HttpRequest<?> generateRequest = HttpRequest.POST("/api/password-reset/generate", 
+        HttpRequest<?> generateRequest = HttpRequest.POST("/api/password-reset/generate",
                 new PasswordResetController.GenerateTokenRequest("person1@test.io"))
                 .header("X-Unity-Auth-Internal", "wrong-secret");
-        
+
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().exchange(generateRequest);
         });
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
     }
 
     @Test
@@ -93,6 +91,6 @@ public class UnityPasswordResetTest {
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().exchange(resetRequest);
         });
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
     }
 }

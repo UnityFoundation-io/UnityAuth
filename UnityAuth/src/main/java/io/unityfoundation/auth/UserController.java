@@ -6,7 +6,6 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
-import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.serde.annotation.Serdeable;
 import io.unityfoundation.auth.entities.*;
 import jakarta.transaction.Transactional;
@@ -18,7 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-@Secured(SecurityRule.IS_AUTHENTICATED)
+@Secured("USER")
 @Controller("/api/users")
 public class UserController {
 
