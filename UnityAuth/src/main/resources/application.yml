@@ -16,9 +16,6 @@ micronaut:
         access:
           - isAnonymous()
     authentication: bearer
-unity:
-  auth:
-    internal-token: ${UNITY_AUTH_INTERNAL_TOKEN}
   server:
     cors:
       enabled: true
@@ -33,3 +30,7 @@ flyway:
   datasources:
     default:
       enabled: true
+
+unity:
+  auth:
+    internal-token: ${UNITY_AUTH_INTERNAL_TOKEN}
